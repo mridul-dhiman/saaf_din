@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-container-highest": "#dae2fd", "surface-variant": "#dae2fd", "on-primary-fixed-variant": "#00504c", "secondary": "#006b5f", "on-error-container": "#93000a", "surface-tint": "#216964", "on-error": "#ffffff", "on-surface-variant": "#3f4947", "on-tertiary-fixed": "#121e1c", "on-secondary-fixed-variant": "#005048", "primary-fixed": "#abefe9", "tertiary": "#313e3c", "outline": "#6f7978", "on-tertiary": "#ffffff", "on-primary-fixed": "#00201e", "on-tertiary-fixed-variant": "#3d4947", "tertiary-container": "#485553", "tertiary-fixed-dim": "#bcc9c7", "surface-container": "#eaedff", "surface-container-lowest": "#ffffff", "tertiary-fixed": "#d7e5e2", "secondary-fixed-dim": "#4fdbc8", "error-container": "#ffdad6", "inverse-primary": "#8fd3cd", "surface-container-high": "#e2e7ff", "outline-variant": "#bec9c7", "secondary-container": "#6df5e1", "on-secondary": "#ffffff", "on-secondary-container": "#006f64", "secondary-fixed": "#71f8e4", "background": "#faf8ff", "surface-container-low": "#f2f3ff", "on-primary-container": "#8ed2cc", "primary-fixed-dim": "#8fd3cd", "primary-container": "#0d5c58", "inverse-surface": "#283044", "surface-bright": "#faf8ff", "on-primary": "#ffffff", "on-surface": "#131b2e", "on-secondary-fixed": "#00201c", "surface-dim": "#d2d9f4", "on-background": "#131b2e", "primary": "#004340", "on-tertiary-container": "#bbc9c6", "error": "#ba1a1a", "inverse-on-surface": "#eef0ff", "surface": "#faf8ff" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xl": "2.5rem", "gutter-mobile": "1rem", "space-sm": "0.5rem", "space-lg": "1.5rem", "space-md": "1rem", "space-xs": "0.25rem", "margin-mobile": "1rem", "gutter": "1.5rem", "margin": "2rem" }, fontFamily: { "headline-xl": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "label-lg": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "display-lg-mobile": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "body-sm": ["Inter"], "body-md": ["Inter"], "display-lg": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"] }, fontSize: { "headline-xl": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "600" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }], "headline-sm": ["20px", { lineHeight: "28px", fontWeight: "600" }], "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }], "label-sm": ["10px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "700" }], "display-lg-mobile": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700" }], "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }], "body-sm": ["13px", { lineHeight: "20px", fontWeight: "400" }], "body-md": ["15px", { lineHeight: "24px", fontWeight: "400" }], "display-lg": ["56px", { lineHeight: "64px", letterSpacing: "-0.03em", fontWeight: "700" }], "headline-xl-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600" }], "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface flex flex-col antialiased"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)]"><div class="h-16 px-gutter-mobile flex items-center justify-between"><div class="flex items-center gap-space-xs"><button class="min-h-[44px] flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[16px] text-secondary">near_me</span><span class="font-label-md text-label-md truncate max-w-[190px]">New Delhi, South Ext · Live AQI 248</span><span class="material-symbols-outlined text-[16px] text-outline">keyboard_arrow_down</span></button></div><div class="flex items-center gap-space-xs"><button aria-label="Notifications" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors relative" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-error ring-2 ring-surface"></span></button><button aria-label="Family Profile" class="w-11 h-11 flex items-center justify-center rounded-full focus:outline-none" type="button"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-[0_2px_6px_rgba(13,92,88,0.2)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></button></div></div></header><main class="flex flex-col relative w-full pt-16 pb-24 bg-surface"><div class="flex flex-col w-full pb-8">
+<!-- Interactive Selector Drawer / Scenario Context -->
+<section class="px-margin-mobile pt-space-sm pb-space-md">
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary-container text-[20px]">science</span>
+<span class="font-label-lg text-label-lg text-on-surface">Exposure Physics Engine</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container">Live Model</span>
+</div>
+<!-- Compact Selectors Stack -->
+<div class="grid grid-cols-1 gap-2 pt-1">
+<!-- Family Member Selector -->
+<button class="w-full flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors text-left group" type="button">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed shrink-0">
+<span class="material-symbols-outlined text-[16px]">child_care</span>
+</div>
+<div class="min-w-0">
+<span class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Target Profile</span>
+<span class="block font-label-md text-label-md text-on-surface truncate font-semibold">Aarav (Child, 8yo · High Sensitivity)</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px] group-hover:text-on-surface transition-colors">unfold_more</span>
+</button>
+<!-- Route & Activity Selector -->
+<div class="grid grid-cols-2 gap-2">
+<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors text-left group" type="button">
+<div class="min-w-0">
+<span class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Route</span>
+<span class="block font-label-md text-label-md text-on-surface truncate">School/Work (18 km)</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">expand_more</span>
+</button>
+<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors text-left group" type="button">
+<div class="min-w-0">
+<span class="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Window</span>
+<span class="block font-label-md text-label-md text-error truncate font-semibold">Peak 8:30 AM · AQI 295</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">schedule</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Segmented View Toggle (Side-by-side tabs on mobile) -->
+<section class="px-margin-mobile pb-space-sm">
+<div class="flex p-1 bg-surface-container rounded-xl" id="scenario-tab-bar">
+<button class="flex-1 py-2 text-center rounded-lg font-label-md text-label-md transition-all bg-surface-container-lowest text-primary-container shadow-sm font-semibold flex items-center justify-center gap-1.5" id="btn-tab-diff" onclick="switchScenarioTab('diff')" type="button">
+<span class="material-symbols-outlined text-[16px]">compare_arrows</span>
+        Difference
+      </button>
+<button class="flex-1 py-2 text-center rounded-lg font-label-md text-label-md transition-all text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-1.5" id="btn-tab-cards" onclick="switchScenarioTab('cards')" type="button">
+<span class="material-symbols-outlined text-[16px]">view_column</span>
+        Side-by-Side
+      </button>
+</div>
+</section>
+<!-- Main Differential Summary (Default Delightful Mobile View) -->
+<section class="px-margin-mobile flex flex-col gap-space-md" id="view-diff">
+<!-- Visual Differential Scorecard -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Aarav's Projected Exposure</span>
+<div class="flex items-baseline gap-2 mt-0.5">
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary-container leading-none">-87%</span>
+<span class="font-headline-sm text-headline-sm text-secondary font-semibold">Lesser Inhaled PM2.5</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined text-[22px]">shield</span>
+</div>
+</div>
+<!-- Comparative Bar Visuals -->
+<div class="mt-space-md pt-space-sm flex flex-col gap-space-md">
+<!-- PM2.5 Inhalation Metric -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center font-label-md text-label-md">
+<span class="text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-error">air</span>
+              Inhaled PM2.5 Burden
+            </span>
+<span class="font-semibold text-on-surface">142 µg vs 18 µg</span>
+</div>
+<!-- Bar Stack 1: Usual Routine -->
+<div class="space-y-1">
+<div class="flex justify-between text-[11px] text-on-surface-variant font-medium">
+<span>Usual: Petrol Sedan (45 min crawl)</span>
+<span class="text-error font-semibold">142 µg (9.4x WHO)</span>
+</div>
+<div class="w-full h-3 rounded-full bg-surface-container overflow-hidden flex">
+<div class="h-full bg-error rounded-full transition-all duration-700" style="width: 100%;"></div>
+</div>
+</div>
+<!-- Bar Stack 2: Clean Alternative -->
+<div class="space-y-1 mt-1">
+<div class="flex justify-between text-[11px] text-on-surface-variant font-medium">
+<span class="text-primary-container font-semibold">Clean: Metro Express + N95</span>
+<span class="text-secondary font-semibold">18 µg (-124 µg avoided)</span>
+</div>
+<div class="w-full h-3 rounded-full bg-surface-container overflow-hidden flex">
+<div class="h-full bg-primary-container rounded-full transition-all duration-700" style="width: 12.6%;"></div>
+</div>
+</div>
+</div>
+<!-- Ultrafine Soot Particles Exposure -->
+<div class="flex flex-col gap-1.5 pt-1">
+<div class="flex justify-between items-center font-label-md text-label-md">
+<span class="text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary">scatter_plot</span>
+              Ultrafine Soot Particles
+            </span>
+<span class="text-secondary font-semibold">-92% Penetration</span>
+</div>
+<div class="w-full h-2.5 rounded-full bg-surface-container overflow-hidden flex">
+<div class="h-full bg-secondary rounded-full" style="width: 8%;"></div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant">
+<span>Cabin in Ring Rd gridlock: 2.1M/cm³</span>
+<span class="text-secondary font-semibold">Metro w/ N95: 0.16M/cm³</span>
+</div>
+</div>
+</div>
+<!-- Humanized Pediatric Impact Callout -->
+<div class="mt-space-md p-3 rounded-lg bg-surface-container-low flex items-start gap-3">
+<span class="material-symbols-outlined text-error text-[20px] shrink-0 mt-0.5">vital_signs</span>
+<p class="font-body-sm text-body-sm text-on-surface">
+          For Aarav's developing lung capacity, inhaling <span class="font-semibold text-error">142 µg PM2.5</span> during Morning Peak matches the particulate intake of <span class="font-semibold">smoking 1.8 cigarettes</span> before 10 AM.
+        </p>
+</div>
+</div>
+<!-- Quick Stat Triple Grid -->
+<div class="grid grid-cols-3 gap-2">
+<div class="p-3 bg-surface-container-lowest rounded-xl shadow-sm text-center">
+<span class="material-symbols-outlined text-secondary text-[20px]">timer</span>
+<span class="block font-headline-sm text-headline-sm text-on-surface mt-1">-14m</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Travel Time</span>
+</div>
+<div class="p-3 bg-surface-container-lowest rounded-xl shadow-sm text-center">
+<span class="material-symbols-outlined text-secondary text-[20px]">co2</span>
+<span class="block font-headline-sm text-headline-sm text-on-surface mt-1">-4.2kg</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">CO2 Footprint</span>
+</div>
+<div class="p-3 bg-surface-container-lowest rounded-xl shadow-sm text-center">
+<span class="material-symbols-outlined text-primary-container text-[20px]">health_metrics</span>
+<span class="block font-headline-sm text-headline-sm text-primary-container mt-1">Normal</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Lung Strain</span>
+</div>
+</div>
+</section>
+<!-- Detailed Stacked Routine Cards (Toggleable / Secondary View) -->
+<section class="hidden px-margin-mobile flex-col gap-space-md" id="view-cards">
+<!-- Card A: Usual Routine -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm relative overflow-hidden">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-error animate-pulse"></span>
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">Routine A: Usual Baseline</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-error-container text-on-error-container">High Hazard</span>
+</div>
+<div class="space-y-3 font-body-sm text-body-sm">
+<div class="flex items-start gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0 mt-0.5">directions_car</span>
+<div>
+<span class="font-medium text-on-surface block">Petrol Sedan / Cab via Ring Road</span>
+<span class="text-on-surface-variant text-label-sm font-label-sm">Crawling at 14 km/h amidst heavy tailpipe exhaust</span>
+</div>
+</div>
+<div class="flex items-start gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0 mt-0.5">filter_alt_off</span>
+<div>
+<span class="font-medium text-on-surface block">Unfiltered AC Cabin Recirculation</span>
+<span class="text-on-surface-variant text-label-sm font-label-sm">Standard OEM mesh, 0% sub-micron trapping</span>
+</div>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-low flex justify-between items-center">
+<div>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Inhaled PM2.5 Dosage</span>
+<span class="font-headline-sm text-headline-sm text-error font-semibold">142 µg</span>
+</div>
+<div class="text-right">
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Emissions</span>
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">4.8 kg CO2</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card B: Clean Alternative -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm relative overflow-hidden">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">Routine B: Clean Alternative</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container">Safe Zone</span>
+</div>
+<div class="space-y-3 font-body-sm text-body-sm">
+<div class="flex items-start gap-2.5">
+<span class="material-symbols-outlined text-secondary text-[18px] shrink-0 mt-0.5">subway</span>
+<div>
+<span class="font-medium text-on-surface block">Metro Express (Yellow Line) + N95</span>
+<span class="text-on-surface-variant text-label-sm font-label-sm">Grade-separated bypass away from direct road surface</span>
+</div>
+</div>
+<div class="flex items-start gap-2.5">
+<span class="material-symbols-outlined text-secondary text-[18px] shrink-0 mt-0.5">masks</span>
+<div>
+<span class="font-medium text-on-surface block">Fitted Pediatric N95 + Underground HVAC</span>
+<span class="text-on-surface-variant text-label-sm font-label-sm">Station electrostatic precipitators + 95% barrier</span>
+</div>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-low flex justify-between items-center">
+<div>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Inhaled PM2.5 Dosage</span>
+<div class="flex items-baseline gap-1.5">
+<span class="font-headline-sm text-headline-sm text-secondary font-semibold">18 µg</span>
+<span class="font-label-sm text-label-sm text-secondary">(-87%)</span>
+</div>
+</div>
+<div class="text-right">
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Emissions</span>
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">0.6 kg CO2</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Route Visual Snapshot Placeholder -->
+<section class="px-margin-mobile pt-space-md">
+<div class="rounded-xl overflow-hidden shadow-sm bg-surface-container-lowest">
+<div class="relative h-32 w-full">
+<img class="w-full h-full object-cover" data-alt="Serene modern public transit platform with lush clean air signage in a misty morning light, showing parents with smiling children wearing comfortable masks, soft atmospheric lighting in mint and deep teal aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMXsgEtaAG67pC5rbQb3ABq_K8SF8BSH00PvVTjZ22i8BXpjE1ZwxJq1S6jP-sLEwEry6fIOOXdwLIx5IZMDAeUjDgL1sdVanARPLUX9jZTP7SUaEk6uci9iFvblYcHR-QZoxff3kc39Ypt2cCxL-UpeXklImNYJnWa3INAMSZEyfOo-ugDnNpqqjmPvK2P-belTUygXvGhwYZbmJYwlaQ5lZIK8ulk-IVlAst67Y"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+<div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-lowest text-on-surface font-semibold shadow-sm">Delhi Metro Pink/Yellow Transfer</span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold bg-surface-container-lowest/90 px-2 py-0.5 rounded-full">38 min total</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Verdict Banner & Direct Commitment CTA -->
+<section class="px-margin-mobile pt-space-md">
+<div class="rounded-xl p-space-md bg-primary text-on-primary shadow-sm flex flex-col gap-3">
+<div class="flex items-start gap-2.5">
+<span class="material-symbols-outlined text-primary-fixed text-[24px] shrink-0 mt-0.5">verified_user</span>
+<div>
+<span class="font-label-md text-label-md uppercase tracking-wider text-primary-fixed">Simulator Recommendation</span>
+<p class="font-body-md text-body-md text-on-primary mt-1 font-medium leading-snug">
+            By shifting Aarav's commute to Metro with an N95 mask at 9:15 AM, your family avoids <span class="font-semibold text-primary-fixed">124 µg toxic PM2.5</span> today.
+          </p>
+</div>
+</div>
+<button class="w-full mt-1 min-h-[44px] py-2.5 px-4 rounded-lg bg-primary-fixed text-on-primary-fixed font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 hover:bg-secondary-fixed transition-colors active:scale-[0.99] shadow-sm" type="button">
+<span class="material-symbols-outlined text-[20px]">bookmark_add</span>
+        Save as My Routine Swap
+      </button>
+</div>
+</section>
+</div>
+<script>
+  function switchScenarioTab(tab) {
+    const diffView = document.getElementById('view-diff');
+    const cardsView = document.getElementById('view-cards');
+    const btnDiff = document.getElementById('btn-tab-diff');
+    const btnCards = document.getElementById('btn-tab-cards');
+
+    if (tab === 'diff') {
+      diffView.classList.remove('hidden');
+      diffView.classList.add('flex');
+      cardsView.classList.add('hidden');
+      cardsView.classList.remove('flex');
+
+      btnDiff.className = 'flex-1 py-2 text-center rounded-lg font-label-md text-label-md transition-all bg-surface-container-lowest text-primary-container shadow-sm font-semibold flex items-center justify-center gap-1.5';
+      btnCards.className = 'flex-1 py-2 text-center rounded-lg font-label-md text-label-md transition-all text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-1.5';
+    } else {
+      diffView.classList.add('hidden');
+      diffView.classList.remove('flex');
+      cardsView.classList.remove('hidden');
+      cardsView.classList.add('flex');
+
+      btnCards.className = 'flex-1 py-2 text-center rounded-lg font-label-md text-label-md transition-all bg-surface-container-lowest text-primary-container shadow-sm font-semibold flex items-center justify-center gap-1.5';
+      btnDiff.className = 'flex-1 py-2 text-center rounded-lg font-label-md text-label-md transition-all text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-1.5';
+    }
+  }
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/85 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.04)]" data-active-classes="text-primary-container font-semibold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors group" data-path="today" href="#"><span class="material-symbols-outlined text-[22px] mb-0.5 group-hover:scale-105 transition-transform">event_available</span><span class="font-label-sm text-label-sm">Today</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors group" data-path="swaps" href="#"><span class="material-symbols-outlined text-[22px] mb-0.5 group-hover:scale-105 transition-transform">swap_horiz</span><span class="font-label-sm text-label-sm">Swaps</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] transition-colors group text-primary-container font-semibold" data-path="simulator" href="#"><span class="material-symbols-outlined text-[22px] mb-0.5 group-hover:scale-105 transition-transform">tune</span><span class="font-label-sm text-label-sm">Simulator</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors group" data-path="room-scan" href="#"><span class="material-symbols-outlined text-[22px] mb-0.5 group-hover:scale-105 transition-transform">document_scanner</span><span class="font-label-sm text-label-sm">Room Scan</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors group" data-path="assistant" href="#"><span class="material-symbols-outlined text-[22px] mb-0.5 group-hover:scale-105 transition-transform">qr_code_2</span><span class="font-label-sm text-label-sm">Assistant</span></a></div></nav></body></html>

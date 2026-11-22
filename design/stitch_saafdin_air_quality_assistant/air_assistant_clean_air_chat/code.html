@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "inverse-on-surface": "#eef0ff", "outline": "#6f7978", "surface-container-highest": "#dae2fd", "surface-tint": "#216964", "on-secondary-fixed": "#00201c", "surface": "#faf8ff", "tertiary-container": "#485553", "on-surface-variant": "#3f4947", "on-secondary": "#ffffff", "on-secondary-container": "#006f64", "tertiary": "#313e3c", "primary-fixed": "#abefe9", "primary": "#004340", "on-primary-fixed": "#00201e", "on-tertiary-fixed-variant": "#3d4947", "surface-container-high": "#e2e7ff", "on-primary": "#ffffff", "on-tertiary-container": "#bbc9c6", "on-error-container": "#93000a", "on-secondary-fixed-variant": "#005048", "primary-container": "#0d5c58", "surface-variant": "#dae2fd", "secondary": "#006b5f", "primary-fixed-dim": "#8fd3cd", "tertiary-fixed": "#d7e5e2", "error": "#ba1a1a", "surface-dim": "#d2d9f4", "on-primary-fixed-variant": "#00504c", "on-primary-container": "#8ed2cc", "background": "#faf8ff", "surface-bright": "#faf8ff", "error-container": "#ffdad6", "inverse-primary": "#8fd3cd", "surface-container-low": "#f2f3ff", "on-background": "#131b2e", "on-surface": "#131b2e", "secondary-fixed-dim": "#4fdbc8", "secondary-fixed": "#71f8e4", "tertiary-fixed-dim": "#bcc9c7", "outline-variant": "#bec9c7", "on-error": "#ffffff", "secondary-container": "#6df5e1", "on-tertiary-fixed": "#121e1c", "on-tertiary": "#ffffff", "surface-container-lowest": "#ffffff", "surface-container": "#eaedff", "inverse-surface": "#283044" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xs": "0.25rem", "margin-mobile": "1rem", "space-md": "1rem", "space-xl": "2.5rem", "space-lg": "1.5rem", "gutter-mobile": "1rem", "space-sm": "0.5rem", "margin": "2rem", "gutter": "1.5rem" }, "fontFamily": { "label-md": ["Plus Jakarta Sans"], "body-sm": ["Inter"], "headline-sm": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "display-lg-mobile": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "body-md": ["Inter"], "display-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "label-lg": ["Plus Jakarta Sans"], "body-lg": ["Inter"] }, "fontSize": { "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "display-lg-mobile": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "700" }], "body-md": ["15px", { "lineHeight": "24px", "fontWeight": "400" }], "display-lg": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "700" }], "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface"><aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="p-space-lg flex items-center gap-space-sm"><img alt="SaafDin Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ALJJyrC6gRAOgFXzG1Mnow6unYi0AOPejhgEnW77XDtCred5RpSk-ZFCyMvMpWi9_xJlV9DoPEOreoGLsJV_LjVp7B_4p-UBpUjPZ1vQSE338no2vZpj3x4t7ndTpffwYngCjrT80_6fFZwXs0ynnILQ0h-h9Xn5HO62_LX2mrdvzAem8h7RJFh7VAEjNLLRMJFhIQivghZOh0Sza1ER3MK9zsBDAd9zzM48tClVFQDwpaNL"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight">SaafDin</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Clean Air Assistant</span></div></div><div class="px-space-md mb-space-md"><div class="bg-surface-container-low rounded-xl p-space-sm flex items-center justify-between shadow-[0_1px_3px_0_rgba(15,23,42,0.03)]"><div class="flex items-center gap-space-xs"><span class="w-2 h-2 rounded-full bg-error animate-pulse"></span><div class="flex flex-col"><span class="font-label-sm text-label-sm text-on-surface truncate max-w-[130px]">New Delhi, South Ext</span><span class="font-body-sm text-[11px] text-error font-semibold leading-tight">Live AQI 248 · Poor</span></div></div><span class="material-symbols-outlined text-outline text-[18px]">air</span></div></div><nav class="flex flex-col gap-space-xs px-space-md" data-active-classes="bg-primary text-on-primary font-label-md rounded-xl shadow-sm"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="today" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Today</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="swaps" href="#"><span class="material-symbols-outlined text-[20px]">swap_horiz</span><span>Swaps</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="what-if-simulator" href="#"><span class="material-symbols-outlined text-[20px]">tune</span><span>What-If Simulator</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="room-scan" href="#"><span class="material-symbols-outlined text-[20px]">document_scanner</span><span>Room Scan</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm transition-all bg-primary text-on-primary font-label-md rounded-xl shadow-sm" data-path="air-assistant" href="#"><span class="material-symbols-outlined text-[20px]">forum</span><span>Air Assistant</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-xl font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="setup-onboarding" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span>Setup / Onboarding</span></a></nav></div><div class="p-space-md flex flex-col gap-space-xs"><div class="bg-surface-container-low rounded-xl p-space-sm flex flex-col gap-space-xs"><div class="flex items-center justify-between"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-secondary text-[16px]">devices</span><span class="font-label-sm text-label-sm text-on-surface-variant">2 Purifiers Connected</span></div><span class="font-label-sm text-label-sm text-secondary font-semibold">Filter 84%</span></div><div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden"><div class="bg-secondary h-full rounded-full w-[84%]"></div></div></div><div class="bg-surface-container rounded-xl p-space-sm flex items-center justify-between cursor-pointer hover:bg-surface-container-high transition-colors"><div class="flex items-center gap-space-sm overflow-hidden"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">family_restroom</span></div><div class="flex flex-col truncate"><span class="font-label-md text-label-md text-on-surface truncate">Sharma Family</span><span class="font-body-sm text-[11px] text-on-surface-variant truncate">4 members · Aarav, Dadi...</span></div></div><span class="material-symbols-outlined text-outline text-[18px]">unfold_more</span></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md"><img alt="SaafDin Logo" class="h-8 w-auto object-contain md:hidden" src="https://lh3.googleusercontent.com/aida/ALJJyrC6gRAOgFXzG1Mnow6unYi0AOPejhgEnW77XDtCred5RpSk-ZFCyMvMpWi9_xJlV9DoPEOreoGLsJV_LjVp7B_4p-UBpUjPZ1vQSE338no2vZpj3x4t7ndTpffwYngCjrT80_6fFZwXs0ynnILQ0h-h9Xn5HO62_LX2mrdvzAem8h7RJFh7VAEjNLLRMJFhIQivghZOh0Sza1ER3MK9zsBDAd9zzM48tClVFQDwpaNL"/><div class="flex items-center gap-space-xs text-on-surface-variant"><span class="material-symbols-outlined text-[18px] text-secondary">calendar_today</span><span class="font-label-md text-label-md text-on-surface">Thursday, 24 Oct</span><span class="text-outline-variant font-label-md">·</span><span class="font-label-md text-label-md text-on-surface-variant">Delhi NCR Winter Advisory Active</span></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs bg-error-container text-on-error-container px-space-sm py-1 rounded-full cursor-pointer hover:opacity-90 transition-opacity"><span class="material-symbols-outlined text-[16px]">warning</span><span class="font-label-sm text-label-sm">High Smog Spike</span></div><button aria-label="Family notifications" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors relative" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-error"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-16 bg-surface"><div class="flex flex-col w-full px-space-lg py-space-md max-w-[1240px] mx-auto min-w-0">
+<!-- Assistant Header Bar -->
+<header class="flex flex-col md:flex-row md:items-center justify-between gap-space-md pb-space-lg">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs mb-1">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-container/30 text-primary font-label-sm text-label-sm tracking-wide">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-ping"></span>
+          CLINICAL AI · LIVE DELHI TELEMETRY
+        </span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-primary tracking-tight">Family Clean Air Assistant</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-2xl mt-1">
+        Trained on CPCB continuous sensor streams, SAFAR dispersion models, and pediatric &amp; geriatric respiratory protocols.
+      </p>
+</div>
+<!-- Right Controls: Language & Audio Mode -->
+<div class="flex items-center gap-space-sm shrink-0 self-start md:self-auto">
+<div aria-label="Language selection" class="bg-surface-container-high p-1 rounded-full flex items-center shadow-sm" role="radiogroup">
+<button class="px-3.5 py-1 rounded-full font-label-md text-label-md bg-surface-container-lowest text-primary shadow-sm transition-all flex items-center gap-1" id="lang-en" type="button">
+<span class="material-symbols-outlined text-[15px] text-secondary">check</span>
+<span>English</span>
+</button>
+<button class="px-3.5 py-1 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all" id="lang-hi" type="button">
+<span>हिन्दी (Hindi)</span>
+</button>
+</div>
+<button aria-label="Assistant Voice Guidance Settings" class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all shadow-[0_1px_3px_0_rgba(15,23,42,0.04)]" type="button">
+<span class="material-symbols-outlined text-[20px]">volume_up</span>
+</button>
+</div>
+</header>
+<!-- Active Context Bar & Family Health Guardrails -->
+<section class="mb-space-lg">
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0_1px_3px_0_rgba(15,23,42,0.03),0_10px_25px_-5px_rgba(15,23,42,0.03)] flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-sm flex-wrap">
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-low text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-secondary">shield_with_heart</span>
+<span>Active Context:</span>
+</div>
+<!-- Aarav Tag -->
+<div class="flex items-center gap-2 bg-surface-container-low/70 hover:bg-surface-container px-3 py-1.5 rounded-full transition-colors cursor-pointer group">
+<div class="w-6 h-6 rounded-full bg-secondary/15 flex items-center justify-center text-secondary font-label-sm text-label-sm">
+            A
+          </div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-label-md text-label-md text-on-surface">Aarav</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant">Child · 7y (Asthma-prone)</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-error" title="High risk in PM2.5 &gt; 90"></span>
+</div>
+<!-- Dadi Tag -->
+<div class="flex items-center gap-2 bg-surface-container-low/70 hover:bg-surface-container px-3 py-1.5 rounded-full transition-colors cursor-pointer group">
+<div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-label-sm text-label-sm">
+            D
+          </div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-label-md text-label-md text-on-surface">Dadi</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant">68y (COPD Stage 1)</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-error" title="High risk in low temperature inversion"></span>
+</div>
+<div class="flex items-center gap-1 text-outline font-body-sm text-body-sm pl-1">
+<span class="material-symbols-outlined text-[15px]">location_on</span>
+<span>South Delhi · Hauz Khas micro-grid</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Sensor Lag: 42s</span>
+<span class="text-outline-variant">·</span>
+<button class="text-secondary hover:underline font-label-md text-label-md">Switch Profile</button>
+</div>
+</div>
+</section>
+<!-- Suggested Prompt Chips Carousel/Grid -->
+<section class="mb-space-lg">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Frequently asked today in Delhi NCR</span>
+<span class="font-label-sm text-label-sm text-secondary flex items-center gap-0.5 cursor-pointer hover:underline">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span> Instant Insights
+      </span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-sm" id="prompt-chips">
+<!-- Chip 1 -->
+<button class="group text-left bg-surface-container-lowest hover:bg-surface-container-low rounded-xl p-3 shadow-sm hover:shadow transition-all flex items-start gap-2.5" type="button">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-primary">
+<span class="text-[17px]">🏃</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors leading-snug line-clamp-1">Morning Jog Safety</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant line-clamp-1">Is it safe to jog tomorrow morning?</span>
+</div>
+</button>
+<!-- Chip 2 -->
+<button class="group text-left bg-surface-container-lowest hover:bg-surface-container-low rounded-xl p-3 shadow-sm hover:shadow transition-all flex items-start gap-2.5" type="button">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-primary">
+<span class="text-[17px]">👶</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors leading-snug line-clamp-1">School Transit Masking</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant line-clamp-1">Should Aarav wear his N95 to school?</span>
+</div>
+</button>
+<!-- Chip 3 -->
+<button class="group text-left bg-surface-container-lowest hover:bg-surface-container-low rounded-xl p-3 shadow-sm hover:shadow transition-all flex items-start gap-2.5" type="button">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-primary">
+<span class="text-[17px]">🪟</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors leading-snug line-clamp-1">Ventilation Timing</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant line-clamp-1">Best time to air out the house today?</span>
+</div>
+</button>
+<!-- Chip 4 -->
+<button class="group text-left bg-surface-container-lowest hover:bg-surface-container-low rounded-xl p-3 shadow-sm hover:shadow transition-all flex items-start gap-2.5" type="button">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-primary">
+<span class="text-[17px]">🍲</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors leading-snug line-clamp-1">Tadka Kitchen PM2.5</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant line-clamp-1">How to reduce cooking soot indoors?</span>
+</div>
+</button>
+</div>
+</section>
+<!-- Main Chat Conversation Canvas -->
+<section class="flex flex-col gap-space-lg mb-space-xl">
+<!-- Message 1: User -->
+<div class="flex items-start justify-end gap-space-sm max-w-3xl ml-auto w-full">
+<div class="flex flex-col items-end">
+<div class="bg-primary text-on-primary rounded-2xl rounded-tr-xs px-space-md py-space-sm shadow-sm max-w-xl">
+<p class="font-body-md text-body-md">
+            Is it safe for Dadi to go for her morning garden walk at 7:00 AM tomorrow?
+          </p>
+</div>
+<div class="flex items-center gap-1.5 mt-1 px-1 font-label-sm text-label-sm text-outline">
+<span>6:42 PM</span>
+<span>·</span>
+<span>Delivered</span>
+</div>
+</div>
+<div class="w-9 h-9 rounded-full bg-surface-container-highest flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+<span class="material-symbols-outlined text-[20px] text-on-surface">person</span>
+</div>
+</div>
+<!-- Message 2: Assistant Full Response -->
+<div class="flex items-start gap-space-sm max-w-3xl mr-auto w-full">
+<div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-md mt-0.5 ring-2 ring-primary-fixed">
+<span class="material-symbols-outlined text-[20px] text-on-primary">psychology</span>
+</div>
+<div class="flex flex-col w-full min-w-0">
+<!-- Direct Answer Card -->
+<div class="bg-surface-container-lowest rounded-2xl rounded-tl-xs p-space-lg shadow-[0_1px_3px_0_rgba(15,23,42,0.03),0_10px_25px_-5px_rgba(15,23,42,0.05)] flex flex-col gap-space-md">
+<!-- Primary Verdict Banner -->
+<div class="bg-error-container/40 rounded-xl p-space-md flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-error text-[22px] shrink-0 mt-0.5">warning</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-error-container">Not recommended at 7:00 AM tomorrow</span>
+<p class="font-body-md text-body-md text-on-surface mt-1">
+                Tomorrow morning’s temperature inversion will trap heavy particulate soot at ground level, with expected AQI between <span class="font-semibold text-error">340 and 385 (Severe)</span> in South Extension.
+              </p>
+</div>
+</div>
+<!-- Tailored Family Breakdown for Dadi -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-secondary uppercase tracking-wide">Tailored Respiratory Advisory · Dadi (COPD Stage 1)</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface">
+              For Dadi’s bronchial safety, we advise postponing outdoor walks until <strong class="font-semibold text-primary">2:30 PM – 4:00 PM</strong>, when solar heating breaks the surface boundary layer and micro-currents reduce the local AQI to approximately <strong class="text-secondary font-semibold">140 (Moderate/Cleanest Slot)</strong>.
+            </p>
+</div>
+<!-- Micro Hourly Sparkline Viz -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col gap-space-xs">
+<div class="flex items-center justify-between text-outline font-label-sm text-label-sm">
+<span>Tomorrow’s Inversion Horizon (AQI vs Time)</span>
+<span class="text-error font-semibold">Peak 385 at 06:45 AM</span>
+</div>
+<div class="w-full h-16 pt-2">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 400 60">
+<defs>
+<lineargradient id="gradient-aqi" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#ba1a1a" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#006b5f" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Area path -->
+<path d="M 0,15 Q 60,8 100,10 T 180,30 T 260,50 T 340,42 T 400,20 L 400,60 L 0,60 Z" fill="url(#gradient-aqi)"></path>
+<!-- Line path -->
+<path d="M 0,15 Q 60,8 100,10 T 180,30 T 260,50 T 340,42 T 400,20" fill="none" stroke="#ba1a1a" stroke-width="2.5"></path>
+<!-- Safe Window Box -->
+<rect fill="#6df5e1" fill-opacity="0.25" height="35" rx="6" width="80" x="230" y="25"></rect>
+<text class="fill-primary font-label-sm text-[9px] font-semibold" x="240" y="44">SAFE WINDOW</text>
+<!-- Dot at 7:00 AM -->
+<circle class="fill-error stroke-surface stroke-2" cx="100" cy="10" r="4"></circle>
+</svg>
+</div>
+<div class="flex justify-between font-label-sm text-label-sm text-outline-variant pt-1">
+<span>05:00 AM</span>
+<span class="text-error font-semibold">07:00 AM (Walk Request)</span>
+<span>11:00 AM</span>
+<span class="text-secondary font-semibold">03:00 PM (Optimal)</span>
+<span>08:00 PM</span>
+</div>
+</div>
+<!-- Embedded Alternative Action Card -->
+<div class="bg-surface rounded-xl p-space-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-xl bg-secondary-container flex items-center justify-center shrink-0 text-on-secondary-container">
+<span class="material-symbols-outlined text-[22px]">self_improvement</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Alternative: Indoor Hallway Walk + Pranayama</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Master bedroom pre-scrubbed · Indoor AQI currently 28 (Pristine)</span>
+</div>
+</div>
+<button class="shrink-0 px-3.5 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-md text-label-md transition-colors flex items-center gap-1" type="button">
+<span>Set 7 AM Indoor Routine</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+<!-- Impact Receipt / Medical Protection Pill -->
+<div class="bg-primary/5 rounded-xl p-space-md flex items-center justify-between flex-wrap gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]">verified</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary">Health Impact Prevention Receipt</span>
+<span class="font-body-sm text-body-sm text-on-surface">Avoids ~68 µg of deeply inhaled alveolar soot (<strong class="font-semibold text-primary">equivalent to avoiding 1.2 cigarettes</strong>).</span>
+</div>
+</div>
+<button class="text-secondary hover:text-primary font-label-sm text-label-sm font-semibold flex items-center gap-0.5">
+<span>View SAFAR Reference</span>
+<span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</button>
+</div>
+<!-- Action Toolbar on Message -->
+<div class="flex items-center justify-between pt-1 text-outline">
+<div class="flex items-center gap-space-sm">
+<button class="flex items-center gap-1 hover:text-primary transition-colors font-label-sm text-label-sm" title="Helpful answer">
+<span class="material-symbols-outlined text-[16px]">thumb_up</span> Helpful
+              </button>
+<button class="flex items-center gap-1 hover:text-primary transition-colors font-label-sm text-label-sm" title="Copy recommendation">
+<span class="material-symbols-outlined text-[16px]">content_copy</span> Copy
+              </button>
+<button class="flex items-center gap-1 hover:text-primary transition-colors font-label-sm text-label-sm" title="Share with family WhatsApp">
+<span class="material-symbols-outlined text-[16px]">share</span> Share to WhatsApp
+              </button>
+</div>
+<span class="font-label-sm text-label-sm text-outline-variant">Confidence: 98.4% (Based on 14 local sensors)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Message 3: User Second Question -->
+<div class="flex items-start justify-end gap-space-sm max-w-3xl ml-auto w-full">
+<div class="flex flex-col items-end">
+<div class="bg-primary text-on-primary rounded-2xl rounded-tr-xs px-space-md py-space-sm shadow-sm max-w-xl">
+<p class="font-body-md text-body-md">
+            Can I open the bedroom windows right now?
+          </p>
+</div>
+<div class="flex items-center gap-1.5 mt-1 px-1 font-label-sm text-label-sm text-outline">
+<span>6:44 PM</span>
+<span>·</span>
+<span>Delivered</span>
+</div>
+</div>
+<div class="w-9 h-9 rounded-full bg-surface-container-highest flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+<span class="material-symbols-outlined text-[20px] text-on-surface">person</span>
+</div>
+</div>
+<!-- Message 4: Assistant Active Live Advisory -->
+<div class="flex items-start gap-space-sm max-w-3xl mr-auto w-full">
+<div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-md mt-0.5 ring-2 ring-primary-fixed">
+<span class="material-symbols-outlined text-[20px] text-on-primary">psychology</span>
+</div>
+<div class="flex flex-col w-full min-w-0">
+<div class="bg-surface-container-lowest rounded-2xl rounded-tl-xs p-space-lg shadow-[0_1px_3px_0_rgba(15,23,42,0.03),0_10px_25px_-5px_rgba(15,23,42,0.05)] flex flex-col gap-space-md">
+<!-- Window Status Quick Alert -->
+<div class="flex items-center justify-between bg-surface-container-low rounded-xl p-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-error/10 text-error flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">sensor_window</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Keep Windows Sealed · Wait 45 Minutes</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Outdoor AQI is 264. Opening now will degrade indoor air from 28 to 175 within 14 minutes.</span>
+</div>
+</div>
+<div class="hidden sm:flex flex-col items-end">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Auto-ventilation reminder</span>
+<span class="font-label-md text-label-md text-secondary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">notifications_active</span> Set for 2:00 PM
+              </span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface">
+            Your optimal <strong>30-minute flush window starts at 2:00 PM today</strong> when wind drift elevates ground pollutants. I will push a phone ping automatically so you don’t have to keep track.
+          </p>
+<!-- Interactive Micro-Card: Indoor Purifiers Response -->
+<div class="bg-surface p-space-md rounded-xl flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></div>
+<span class="font-body-sm text-body-sm text-on-surface">Master Bedroom Purifier is running on <strong>Smart Whisper Mode (18 dB)</strong></span>
+</div>
+<button class="px-3 py-1 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm" type="button">
+              Boost Speed
+            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Sticky Bottom Interactive Input Dock -->
+<section class="sticky bottom-4 z-30 w-full mt-auto">
+<div class="bg-surface-container-lowest/95 backdrop-blur-xl rounded-2xl p-space-sm shadow-[0_20px_35px_-10px_rgba(13,92,88,0.12),0_1px_3px_0_rgba(15,23,42,0.06)] flex flex-col gap-2">
+<!-- Input Field Shell -->
+<div class="flex items-center gap-space-xs bg-surface-container-low/70 rounded-xl px-space-md py-2 focus-within:bg-surface-container-lowest focus-within:ring-2 focus-within:ring-secondary/40 transition-all">
+<!-- Voice Input CTA for Elders -->
+<button aria-label="Ask using voice in Hindi or English" class="w-10 h-10 rounded-full bg-secondary-container/40 hover:bg-secondary-container text-primary flex items-center justify-center shrink-0 transition-transform active:scale-95 group" id="mic-btn" title="Voice Search (Useful for Dadi)" type="button">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">mic</span>
+</button>
+<!-- Main Query Input -->
+<input class="w-full bg-transparent font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none px-space-xs" id="chat-input" placeholder="Ask anything about outdoor smog, mask fit, purifiers, or safe activity windows..." type="text"/>
+<!-- Auxiliary Action Icons -->
+<div class="flex items-center gap-1 shrink-0 text-on-surface-variant">
+<button aria-label="Attach Photo of Air Purifier Filter or Smog" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors" title="Scan Filter or Window View" type="button">
+<span class="material-symbols-outlined text-[20px]">add_photo_alternate</span>
+</button>
+<button aria-label="Sync Current GPS Coordinates" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-surface-container-high transition-colors" title="Sync live sensor nearest to your location" type="button">
+<span class="material-symbols-outlined text-[20px]">my_location</span>
+</button>
+<!-- Primary Send Button in Deep Teal -->
+<button aria-label="Send air question" class="ml-1 w-10 h-10 rounded-xl bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center transition-all shadow-md active:scale-95" id="send-btn" type="button">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</div>
+</div>
+<!-- Dock Metadata Footnote -->
+<div class="flex items-center justify-between px-space-sm font-label-sm text-label-sm text-outline">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[14px] text-secondary">verified_user</span>
+<span>Pediatric Bronchial Safety certified · AI responses cross-verified against live Safar/CPCB telemetry.</span>
+</div>
+<div class="hidden md:flex items-center gap-2">
+<span>Press <kbd class="px-1.5 py-0.5 rounded bg-surface-container font-mono text-[10px]">Return</kbd> to ask</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<script>
+  (function() {
+    // Language toggle interaction
+    const langEn = document.getElementById('lang-en');
+    const langHi = document.getElementById('lang-hi');
+
+    if (langEn && langHi) {
+      langEn.addEventListener('click', function() {
+        langEn.className = 'px-3.5 py-1 rounded-full font-label-md text-label-md bg-surface-container-lowest text-primary shadow-sm transition-all flex items-center gap-1';
+        langHi.className = 'px-3.5 py-1 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all';
+        if (!langEn.querySelector('.material-symbols-outlined')) {
+          const icon = document.createElement('span');
+          icon.className = 'material-symbols-outlined text-[15px] text-secondary';
+          icon.textContent = 'check';
+          langEn.prepend(icon);
+        }
+        const hiIcon = langHi.querySelector('.material-symbols-outlined');
+        if (hiIcon) hiIcon.remove();
+      });
+
+      langHi.addEventListener('click', function() {
+        langHi.className = 'px-3.5 py-1 rounded-full font-label-md text-label-md bg-surface-container-lowest text-primary shadow-sm transition-all flex items-center gap-1';
+        langEn.className = 'px-3.5 py-1 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all';
+        if (!langHi.querySelector('.material-symbols-outlined')) {
+          const icon = document.createElement('span');
+          icon.className = 'material-symbols-outlined text-[15px] text-secondary';
+          icon.textContent = 'check';
+          langHi.prepend(icon);
+        }
+        const enIcon = langEn.querySelector('.material-symbols-outlined');
+        if (enIcon) enIcon.remove();
+      });
+    }
+
+    // Prompt chips insertion to chat input
+    const chips = document.querySelectorAll('#prompt-chips button');
+    const chatInput = document.getElementById('chat-input');
+    chips.forEach(chip => {
+      chip.addEventListener('click', function() {
+        const textElem = chip.querySelector('.text-\\[11px\\]');
+        if (textElem && chatInput) {
+          chatInput.value = textElem.textContent.trim();
+          chatInput.focus();
+        }
+      });
+    });
+
+    // Voice button micro-state
+    const micBtn = document.getElementById('mic-btn');
+    if (micBtn) {
+      let isRecording = false;
+      micBtn.addEventListener('click', function() {
+        isRecording = !isRecording;
+        if (isRecording) {
+          micBtn.classList.add('bg-error', 'text-on-error', 'animate-pulse');
+          if (chatInput) chatInput.placeholder = 'Listening in Hindi / English...';
+        } else {
+          micBtn.classList.remove('bg-error', 'text-on-error', 'animate-pulse');
+          if (chatInput) chatInput.placeholder = 'Ask anything about outdoor smog, mask fit, purifiers, or safe activity windows...';
+        }
+      });
+    }
+  })();
+</script></main></div></body></html>

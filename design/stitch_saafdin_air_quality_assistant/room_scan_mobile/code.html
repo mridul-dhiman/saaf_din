@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-container-highest": "#dae2fd", "surface-variant": "#dae2fd", "on-primary-fixed-variant": "#00504c", "secondary": "#006b5f", "on-error-container": "#93000a", "surface-tint": "#216964", "on-error": "#ffffff", "on-surface-variant": "#3f4947", "on-tertiary-fixed": "#121e1c", "on-secondary-fixed-variant": "#005048", "primary-fixed": "#abefe9", "tertiary": "#313e3c", "outline": "#6f7978", "on-tertiary": "#ffffff", "on-primary-fixed": "#00201e", "on-tertiary-fixed-variant": "#3d4947", "tertiary-container": "#485553", "tertiary-fixed-dim": "#bcc9c7", "surface-container": "#eaedff", "surface-container-lowest": "#ffffff", "tertiary-fixed": "#d7e5e2", "secondary-fixed-dim": "#4fdbc8", "error-container": "#ffdad6", "inverse-primary": "#8fd3cd", "surface-container-high": "#e2e7ff", "outline-variant": "#bec9c7", "secondary-container": "#6df5e1", "on-secondary": "#ffffff", "on-secondary-container": "#006f64", "secondary-fixed": "#71f8e4", "background": "#faf8ff", "surface-container-low": "#f2f3ff", "on-primary-container": "#8ed2cc", "primary-fixed-dim": "#8fd3cd", "primary-container": "#0d5c58", "inverse-surface": "#283044", "surface-bright": "#faf8ff", "on-primary": "#ffffff", "on-surface": "#131b2e", "on-secondary-fixed": "#00201c", "surface-dim": "#d2d9f4", "on-background": "#131b2e", "primary": "#004340", "on-tertiary-container": "#bbc9c6", "error": "#ba1a1a", "inverse-on-surface": "#eef0ff", "surface": "#faf8ff" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xl": "2.5rem", "gutter-mobile": "1rem", "space-sm": "0.5rem", "space-lg": "1.5rem", "space-md": "1rem", "space-xs": "0.25rem", "margin-mobile": "1rem", "gutter": "1.5rem", "margin": "2rem" }, fontFamily: { "headline-xl": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "label-lg": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "display-lg-mobile": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "body-sm": ["Inter"], "body-md": ["Inter"], "display-lg": ["Plus Jakarta Sans"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"] }, fontSize: { "headline-xl": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "600" }], "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "600" }], "headline-sm": ["20px", { lineHeight: "28px", fontWeight: "600" }], "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }], "label-sm": ["10px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "700" }], "display-lg-mobile": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700" }], "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }], "body-sm": ["13px", { lineHeight: "20px", fontWeight: "400" }], "body-md": ["15px", { lineHeight: "24px", fontWeight: "400" }], "display-lg": ["56px", { lineHeight: "64px", letterSpacing: "-0.03em", fontWeight: "700" }], "headline-xl-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600" }], "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface flex flex-col antialiased"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)]"><div class="h-16 px-gutter-mobile flex items-center justify-between"><div class="flex items-center gap-space-xs"><button class="min-h-[44px] flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[16px] text-secondary">near_me</span><span class="font-label-md text-label-md truncate max-w-[190px]">New Delhi, South Ext · Live AQI 248</span><span class="material-symbols-outlined text-[16px] text-outline">keyboard_arrow_down</span></button></div><div class="flex items-center gap-space-xs"><button aria-label="Notifications" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors relative" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-error ring-2 ring-surface"></span></button><button aria-label="Family Profile" class="w-11 h-11 flex items-center justify-center rounded-full focus:outline-none" type="button"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-[0_2px_6px_rgba(13,92,88,0.2)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></button></div></div></header><main class="flex flex-col relative w-full pt-16 pb-24 bg-surface"><div class="flex flex-col w-full gap-space-md px-gutter-mobile pb-8">
+<!-- Diagnostics Top Status Ribbon & Live Scan CTA -->
+<div class="flex items-center justify-between gap-space-xs bg-surface-container-low p-2 rounded-2xl shadow-sm">
+<div class="flex items-center gap-2 pl-2">
+<div class="relative flex items-center justify-center w-2.5 h-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Spatial Leak Diagnostics</span>
+<span class="font-label-md text-label-md text-on-surface">AI Sensor V2.4 Active</span>
+</div>
+</div>
+<button class="min-h-[44px] px-3.5 py-2 rounded-xl bg-primary text-on-primary flex items-center gap-1.5 shadow-sm active:scale-95 transition-transform" id="reScanTrigger" type="button">
+<span class="material-symbols-outlined text-[18px]">photo_camera</span>
+<span class="font-label-md text-label-md">Scan Room / Balcony</span>
+</button>
+</div>
+<!-- Spatial Room Scan Visual Card -->
+<div class="relative flex flex-col rounded-2xl bg-surface-container-lowest shadow-md overflow-hidden">
+<!-- Camera Viewport with Visual Marker Overlay -->
+<div class="relative w-full aspect-[4/3] bg-surface-container-high overflow-hidden select-none">
+<img class="w-full h-full object-cover" data-alt="A brightly lit modern urban apartment living room with expansive sliding glass doors opening to a balcony in New Delhi, featuring a contemporary fabric sofa, large indoor plants, and a cylindrical white HEPA air purifier, captured with clean architectural lines, deep teal accent textiles, and gentle morning ambient illumination." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_FLNfgkvIZvPbzAcYvcpO3CQfem5ugWDmZXHdJ9Jr57a6wN_b385pwcF21GrfYit5WYvYIYbT8r8spRoBfR5yZ2REJEyF3rPK7qGc9hasu9j1P9FvnrGUq9p7xT2V5HI7WO2LuOhTzzL52xK2r0gK6fUiqhJY26BqnSph2xQrh34vL-d-DIo1PxVjvRoEHyctce6t02U5Ebo949aSej8frgIJrUX4_H2JJ9ROdeg"/>
+<!-- Ambient Sensor Overlay Gradient -->
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-surface-container-lowest/30 pointer-events-none"></div>
+<!-- AR Spatial Grid HUD -->
+<div class="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(#006b5f_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<!-- Room Title & Scan Meta Badge -->
+<div class="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest/90 backdrop-blur-md shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[16px]">living</span>
+<span class="font-label-sm text-label-sm text-on-surface">Living Room &amp; Balcony · Today 09:41 AM</span>
+</div>
+<!-- Marker 1: Balcony Door Bottom Gap -->
+<button class="pin-marker absolute bottom-[18%] right-[22%] z-20 flex items-center justify-center group focus:outline-none" data-pin="1" type="button">
+<span class="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-error opacity-40"></span>
+<div class="w-7 h-7 rounded-full bg-error text-on-error flex items-center justify-center font-label-md text-label-md shadow-md ring-2 ring-surface-container-lowest group-hover:scale-110 transition-transform">1</div>
+</button>
+<!-- Marker 2: AC Sleeve Gap -->
+<button class="pin-marker absolute top-[28%] right-[14%] z-20 flex items-center justify-center group focus:outline-none" data-pin="2" type="button">
+<span class="animate-ping absolute inline-flex h-7 w-7 rounded-full bg-error opacity-30"></span>
+<div class="w-6 h-6 rounded-full bg-error text-on-error flex items-center justify-center font-label-sm text-label-sm shadow-md ring-2 ring-surface-container-lowest group-hover:scale-110 transition-transform">2</div>
+</button>
+<!-- Marker 3: Stagnant Pocket behind Sofa -->
+<button class="pin-marker absolute bottom-[38%] left-[26%] z-20 flex items-center justify-center group focus:outline-none" data-pin="3" type="button">
+<div class="w-6 h-6 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-label-sm text-label-sm shadow-md ring-2 ring-surface-container-lowest group-hover:scale-110 transition-transform">3</div>
+</button>
+<!-- Marker 4: Air Purifier Obstruction -->
+<button class="pin-marker absolute bottom-[14%] left-[16%] z-20 flex items-center justify-center group focus:outline-none" data-pin="4" type="button">
+<span class="animate-ping absolute inline-flex h-7 w-7 rounded-full bg-secondary opacity-30"></span>
+<div class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm shadow-md ring-2 ring-surface-container-lowest group-hover:scale-110 transition-transform">4</div>
+</button>
+<!-- Selected Marker Tooltip HUD -->
+<div class="absolute top-3 right-3 max-w-[210px] px-2.5 py-1.5 rounded-xl bg-surface-container-lowest/95 backdrop-blur-md shadow-lg transition-all duration-200" id="pinTooltip">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold truncate" id="tooltipTitle">Pin 1: Balcony Draft</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight mt-0.5" id="tooltipDesc">Under-door perimeter leak</p>
+</div>
+</div>
+<!-- Baseline Infiltration Telemetry strip -->
+<div class="p-space-md flex items-center justify-between bg-surface-container-lowest">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Current Indoor Baseline</span>
+<span class="px-1.5 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">High Infiltration</span>
+</div>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-headline-xl-mobile text-headline-xl-mobile text-on-surface font-bold">84</span>
+<span class="font-label-md text-label-md text-outline">µg/m³ PM2.5</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-sm text-label-sm text-outline">Outdoor Exposure</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-secondary text-[16px]">air</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">AQI 248 (Poor)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Fixes Header & Tab Filters -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Prioritized Spatial Fixes</h2>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm">3 Pending</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-medium">Ranked by Impact</span>
+</div>
+<!-- Prioritized Fixes Interactive List -->
+<div class="flex flex-col gap-space-sm" id="fixesList">
+<!-- Fix 1: Sliding Balcony Door -->
+<div class="flex flex-col rounded-2xl bg-surface-container-lowest p-space-md shadow-sm transition-all" id="fixCard1">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-xl bg-error-container text-on-error-container flex items-center justify-center font-label-md text-label-md font-bold shrink-0 mt-0.5">
+            1
+          </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="font-label-sm text-label-sm text-error font-semibold">Perimeter Leakage</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-outline">Critical Entrance</span>
+</div>
+<h3 class="font-label-lg text-label-lg text-on-surface mt-0.5 font-semibold">Seal the gap under sliding balcony door</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Micro-draft pushes heavy street particulates past the rubber runner.</p>
+</div>
+</div>
+<div class="flex flex-col items-end shrink-0 pl-1">
+<span class="px-2 py-1 rounded-lg bg-secondary-container text-on-secondary-container font-label-md text-label-md font-semibold text-right">
+            -28 µg/m³
+          </span>
+<span class="font-label-sm text-label-sm text-secondary mt-0.5 font-semibold">-33% Drop</span>
+</div>
+</div>
+<!-- Action Row -->
+<div class="flex items-center gap-2 mt-space-md pt-space-xs">
+<button class="flex-1 min-h-[44px] px-3 py-2 rounded-xl bg-surface-container-high text-on-surface flex items-center justify-center gap-1.5 hover:bg-surface-container-highest active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">shopping_bag</span>
+<span class="font-label-md text-label-md">View ₹299 DIY Seal Strip</span>
+</button>
+<button class="min-h-[44px] px-4 py-2 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center gap-1 font-label-md text-label-md font-semibold active:scale-95 transition-all" onclick="toggleFix(1, this)" type="button">
+<span class="material-symbols-outlined text-[18px]">check</span>
+<span>Mark Done</span>
+</button>
+</div>
+</div>
+<!-- Fix 2: HEPA Relocation -->
+<div class="flex flex-col rounded-2xl bg-surface-container-lowest p-space-md shadow-sm transition-all" id="fixCard2">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md text-label-md font-bold shrink-0 mt-0.5">
+            2
+          </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Airflow Dynamic</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Free Adjustment</span>
+</div>
+<h3 class="font-label-lg text-label-lg text-on-surface mt-0.5 font-semibold">Relocate HEPA Purifier 1.5m away from sofa</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Current corner position recirculates trapped air without circulating toward seating.</p>
+</div>
+</div>
+<div class="flex flex-col items-end shrink-0 pl-1">
+<span class="px-2 py-1 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold text-right">
+            -19 µg/m³
+          </span>
+<span class="font-label-sm text-label-sm text-outline mt-0.5">-22% Drop</span>
+</div>
+</div>
+<!-- Action Row -->
+<div class="flex items-center gap-2 mt-space-md pt-space-xs">
+<button class="flex-1 min-h-[44px] px-3 py-2 rounded-xl bg-surface-container-low text-on-surface flex items-center justify-center gap-1.5 hover:bg-surface-container active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">explore</span>
+<span class="font-label-md text-label-md">Show Optimal Spot</span>
+</button>
+<button class="min-h-[44px] px-4 py-2 rounded-xl bg-surface-container-low text-on-surface flex items-center justify-center gap-1 font-label-md text-label-md active:scale-95 transition-all" onclick="toggleFix(2, this)" type="button">
+<span class="material-symbols-outlined text-[18px]">check</span>
+<span>Mark Done</span>
+</button>
+</div>
+</div>
+<!-- Fix 3: Window AC Bypass -->
+<div class="flex flex-col rounded-2xl bg-surface-container-lowest p-space-md shadow-sm transition-all" id="fixCard3">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-xl bg-surface-container text-on-surface font-label-md text-label-md font-bold flex items-center justify-center shrink-0 mt-0.5">
+            3
+          </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="font-label-sm text-label-sm text-outline font-semibold">Seasonal Vent Bleed</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-outline">Winter Routine</span>
+</div>
+<h3 class="font-label-lg text-label-lg text-on-surface mt-0.5 font-semibold">Tape seasonal seal on window AC bypass</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Passive backdraft through inactive damper letting cold smog seep in overnight.</p>
+</div>
+</div>
+<div class="flex flex-col items-end shrink-0 pl-1">
+<span class="px-2 py-1 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold text-right">
+            -12 µg/m³
+          </span>
+<span class="font-label-sm text-label-sm text-outline mt-0.5">-14% Drop</span>
+</div>
+</div>
+<!-- Action Row -->
+<div class="flex items-center gap-2 mt-space-md pt-space-xs">
+<button class="flex-1 min-h-[44px] px-3 py-2 rounded-xl bg-surface-container-low text-on-surface flex items-center justify-center gap-1.5 hover:bg-surface-container active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">play_circle</span>
+<span class="font-label-md text-label-md">2-Min Video Guide</span>
+</button>
+<button class="min-h-[44px] px-4 py-2 rounded-xl bg-surface-container-low text-on-surface flex items-center justify-center gap-1 font-label-md text-label-md active:scale-95 transition-all" onclick="toggleFix(3, this)" type="button">
+<span class="material-symbols-outlined text-[18px]">check</span>
+<span>Mark Done</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Projected Attainable Outcome Card (Deep Teal Sanctuary Anchor) -->
+<div class="relative overflow-hidden rounded-2xl bg-primary text-on-primary p-space-lg shadow-xl mt-1">
+<!-- Atmospheric subtle background glow -->
+<div class="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-secondary opacity-30 blur-2xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col gap-space-md">
+<!-- Card Badge & Target -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-on-primary/10 backdrop-blur-sm">
+<span class="material-symbols-outlined text-secondary-fixed text-[16px]">verified</span>
+<span class="font-label-sm text-label-sm text-secondary-fixed tracking-wide uppercase">WHO Clean Air Target</span>
+</div>
+<div class="flex items-baseline gap-1 text-right">
+<span class="font-headline-sm text-headline-sm text-on-primary font-bold">25</span>
+<span class="font-label-sm text-label-sm text-secondary-fixed">µg/m³</span>
+</div>
+</div>
+<!-- Punchy Summary -->
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-primary">Projected 25 µg/m³ Safe Haven</h4>
+<p class="font-body-md text-body-md text-primary-fixed mt-1 leading-relaxed">
+          Applying all 3 fixes will drop your living room indoor PM2.5 from <span class="font-semibold text-on-primary">84</span> to <span class="font-semibold text-secondary-fixed">25 µg/m³</span>.
+        </p>
+</div>
+<!-- Before vs After Interactive Visual Bar -->
+<div class="flex flex-col gap-1.5 p-3 rounded-xl bg-on-primary/5">
+<div class="flex justify-between font-label-sm text-label-sm text-primary-fixed">
+<span>Current: 84 µg/m³ (Unhealthy)</span>
+<span class="text-secondary-fixed">Target: 25 µg/m³ (-70%)</span>
+</div>
+<div class="w-full h-2.5 bg-surface-container-highest/20 rounded-full overflow-hidden flex">
+<div class="h-full bg-secondary-fixed rounded-full" style="width: 30%"></div>
+<div class="h-full bg-error-container/40 rounded-r-full" style="width: 70%"></div>
+</div>
+</div>
+<!-- Action CTA Buttons -->
+<div class="flex flex-col gap-2 pt-1">
+<button class="w-full min-h-[44px] px-4 py-3 rounded-xl bg-secondary-fixed text-on-secondary-fixed font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition-all" id="saveAuditBtn" type="button">
+<span class="material-symbols-outlined text-[20px]">calendar_month</span>
+<span>Save Audit &amp; Set 7-Day Re-Scan</span>
+</button>
+<button class="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-on-primary/10 hover:bg-on-primary/15 text-on-primary font-label-md text-label-md flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">bed</span>
+<span>Scan Bedroom Next</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Pin tooltip micro-interaction
+  const pinData = {
+    1: { title: "Pin 1: Balcony Draft", desc: "Under-door perimeter gap · Est: -28 µg/m³" },
+    2: { title: "Pin 2: AC Sleeve Gap", desc: "Seasonal vent backdraft · Est: -12 µg/m³" },
+    3: { title: "Pin 3: Stagnant Pocket", desc: "Deep dead zone behind sofa corner" },
+    4: { title: "Pin 4: Misplaced Purifier", desc: "Obstructed HEPA exhaust · Est: -19 µg/m³" }
+  };
+
+  document.querySelectorAll('.pin-marker').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = btn.getAttribute('data-pin');
+      const tooltip = document.getElementById('pinTooltip');
+      const title = document.getElementById('tooltipTitle');
+      const desc = document.getElementById('tooltipDesc');
+      if (pinData[id]) {
+        title.textContent = pinData[id].title;
+        desc.textContent = pinData[id].desc;
+        tooltip.classList.add('scale-105');
+        setTimeout(() => tooltip.classList.remove('scale-105'), 200);
+      }
+    });
+  });
+
+  // Toggle Fix Completed state
+  function toggleFix(id, trigger) {
+    const card = document.getElementById('fixCard' + id);
+    const isDone = trigger.getAttribute('data-done') === 'true';
+    if (!isDone) {
+      trigger.setAttribute('data-done', 'true');
+      trigger.classList.remove('bg-surface-container-low', 'text-on-surface');
+      trigger.classList.add('bg-secondary', 'text-on-secondary');
+      trigger.innerHTML = '<span class="material-symbols-outlined text-[18px]">task_alt</span><span>Completed</span>';
+      card.classList.add('opacity-75');
+    } else {
+      trigger.setAttribute('data-done', 'false');
+      trigger.classList.remove('bg-secondary', 'text-on-secondary');
+      trigger.classList.add('bg-surface-container-low', 'text-on-surface');
+      trigger.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span><span>Mark Done</span>';
+      card.classList.remove('opacity-75');
+    }
+  }
+
+  // Save audit feedback toast
+  const saveBtn = document.getElementById('saveAuditBtn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      const origText = saveBtn.innerHTML;
+      saveBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">check_circle</span><span>Scheduled for Next Monday!</span>';
+      saveBtn.classList.remove('bg-secondary-fixed');
+      saveBtn.classList.add('bg-secondary-container', 'text-on-secondary-container');
+      setTimeout(() => {
+        saveBtn.innerHTML = origText;
+        saveBtn.classList.add('bg-secondary-fixed');
+        saveBtn.classList.remove('bg-secondary-container', 'text-on-secondary-container');
+      }, 2500);
+    });
+  }
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/85 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.04)]" data-active-classes="text-primary-container font-semibold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors group" data-path="today" href="#"><span class="material-symbols-outlined text-[22px] mb-0.5 group-hover:scale-105 transition-transform">event_available</span><span class="font-label-sm text-label-sm">Today</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors group" data-path="swaps" href="#"><span class="material-symbols-outlined text-[22px] mb-0.5 group-hover:scale-105 transition-transform">swap_horiz</span><span class="font-label-sm text-label-sm">Swaps</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors group" data-path="simulator" href="#"><span class="material-symbols-outlined text-[22px] mb-0.5 group-hover:scale-105 transition-transform">tune</span><span class="font-label-sm text-label-sm">Simulator</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] transition-colors group text-primary-container font-semibold" data-path="room-scan" href="#"><span class="material-symbols-outlined text-[22px] mb-0.5 group-hover:scale-105 transition-transform">document_scanner</span><span class="font-label-sm text-label-sm">Room Scan</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] text-on-surface-variant transition-colors group" data-path="assistant" href="#"><span class="material-symbols-outlined text-[22px] mb-0.5 group-hover:scale-105 transition-transform">qr_code_2</span><span class="font-label-sm text-label-sm">Assistant</span></a></div></nav></body></html>
