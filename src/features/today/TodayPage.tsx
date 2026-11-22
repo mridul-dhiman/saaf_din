@@ -7,6 +7,7 @@ import { findBestAndWorstWindows } from '../../lib/aqi';
 import { AqiBanner } from '../../components/AqiBanner';
 import { HourlyStrip } from '../../components/HourlyStrip';
 import { generateRuleBasedPlan, EnrichedAction } from '../../lib/impact/rulePlanner';
+import { generateGeminiPlan } from '../../services/gemini';
 import { ReceiptModal } from '../../components/ReceiptModal';
 import { formatCigarettes } from '../../lib/impact/cigarettes';
 
@@ -60,26 +61,43 @@ export const TodayPage: React.FC = () => {
   useEffect(() => {
     if (!forecast || forecast.points.length === 0) return;
 
-    // Generate fresh plan from forecast
-    const generated = generateRuleBasedPlan(profile, forecast.points, windowsResult);
+    let active = true;
 
-    // Merge saved completion state from localStorage if available
+    // First render immediate rule-based plan so UI is never blank
+    const initialPlan = generateRuleBasedPlan(profile, forecast.points, windowsResult);
+    
+    // Check local completion state
+    let savedCompletion: Record<string, boolean> = {};
     try {
       const saved = localStorage.getItem(storagePlanKey);
-      if (saved) {
-        const savedCompletion: Record<string, boolean> = JSON.parse(saved);
-        const merged = generated.map((act) => ({
-          ...act,
-          completed: savedCompletion[act.id] !== undefined ? savedCompletion[act.id] : act.completed,
-        }));
-        setActions(merged);
-        return;
-      }
+      if (saved) savedCompletion = JSON.parse(saved);
     } catch (e) {
-      console.warn('Error reading cached plan completions:', e);
+      // ignore
     }
 
-    setActions(generated);
+    const applyCompletions = (planList: EnrichedAction[]) => {
+      return planList.map((act) => ({
+        ...act,
+        completed: savedCompletion[act.id] !== undefined ? savedCompletion[act.id] : act.completed,
+      }));
+    };
+
+    setActions(applyCompletions(initialPlan));
+
+    // Then attempt Gemini plan asynchronously
+    generateGeminiPlan(profile, forecast.points, windowsResult)
+      .then((geminiPlan) => {
+        if (active && geminiPlan.length > 0) {
+          setActions(applyCompletions(geminiPlan));
+        }
+      })
+      .catch((err) => {
+        console.warn('Gemini plan generation error, maintaining rule-based plan:', err);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [forecast, profile, windowsResult]);
 
   // Toggle action completion
