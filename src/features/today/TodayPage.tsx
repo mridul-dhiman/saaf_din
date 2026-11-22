@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useProfile } from '../../context/ProfileContext';
+import { useLanguage } from '../../i18n';
 import { currentForecastProvider } from '../../services/forecast';
 import { HourlyForecast } from '../../types';
 import { findBestAndWorstWindows } from '../../lib/aqi';
@@ -9,10 +10,12 @@ import { HourlyStrip } from '../../components/HourlyStrip';
 import { generateRuleBasedPlan, EnrichedAction } from '../../lib/impact/rulePlanner';
 import { generateGeminiPlan } from '../../services/gemini';
 import { ReceiptModal } from '../../components/ReceiptModal';
+import { ShareCardModal } from '../../components/ShareCardModal';
 import { formatCigarettes } from '../../lib/impact/cigarettes';
 
 export const TodayPage: React.FC = () => {
   const { profile } = useProfile();
+  const { t } = useLanguage();
   const [forecast, setForecast] = useState<HourlyForecast | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +23,7 @@ export const TodayPage: React.FC = () => {
   const [actions, setActions] = useState<EnrichedAction[]>([]);
   const [selectedActionForReceipt, setSelectedActionForReceipt] = useState<EnrichedAction | null>(null);
   const [showFormulaModal, setShowFormulaModal] = useState<boolean>(false);
+  const [showShareModal, setShowShareModal] = useState<boolean>(false);
 
   const todayDateStr = new Date().toISOString().slice(0, 10);
   const storagePlanKey = `saafdin_plan_${todayDateStr}`;
@@ -387,6 +391,16 @@ export const TodayPage: React.FC = () => {
                     </span>
                   </div>
                 </div>
+
+                {/* Share Daily Impact Card CTA */}
+                <button
+                  type="button"
+                  onClick={() => setShowShareModal(true)}
+                  className="w-full mt-1 py-2 px-3 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center justify-center gap-1.5 transition-colors border border-surface-container"
+                >
+                  <span className="material-symbols-outlined text-[16px] text-secondary">share</span>
+                  <span>{t.today.shareCard}</span>
+                </button>
               </div>
 
               {/* Family Cards */}
@@ -461,6 +475,18 @@ export const TodayPage: React.FC = () => {
         <ReceiptModal
           action={actions[0]}
           onClose={() => setShowFormulaModal(false)}
+        />
+      )}
+
+      {/* Share Impact Card Modal */}
+      {showShareModal && (
+        <ShareCardModal
+          profile={profile}
+          pm25AvoidedUg={totalPm25AvoidedUg}
+          co2SavedKg={totalCo2SavedKg}
+          cigarettesAvoided={approxCigarettesAvoided}
+          completedActionsCount={completedCount}
+          onClose={() => setShowShareModal(false)}
         />
       )}
     </div>

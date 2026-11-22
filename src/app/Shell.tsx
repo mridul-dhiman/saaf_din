@@ -1,25 +1,27 @@
 import React from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useProfile } from '../context/ProfileContext';
+import { useLanguage } from '../i18n';
 
 export const Shell: React.FC = () => {
   const { profile } = useProfile();
+  const { language, setLanguage, t } = useLanguage();
   const location = useLocation();
 
   // Format today's date
-  const todayFormatted = new Intl.DateTimeFormat('en-IN', {
+  const todayFormatted = new Intl.DateTimeFormat(language === 'hi' ? 'hi-IN' : 'en-IN', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
   }).format(new Date());
 
   const navItems = [
-    { path: '/today', label: 'Today', icon: 'grid_view', mobileIcon: 'event_available' },
-    { path: '/swaps', label: 'Swaps', icon: 'swap_horiz', mobileIcon: 'swap_horiz' },
-    { path: '/simulator', label: 'What-If Simulator', mobileLabel: 'Simulator', icon: 'tune', mobileIcon: 'tune' },
-    { path: '/room-scan', label: 'Room Scan', icon: 'document_scanner', mobileIcon: 'document_scanner' },
-    { path: '/assistant', label: 'Air Assistant', mobileLabel: 'Assistant', icon: 'forum', mobileIcon: 'chat_bubble' },
-    { path: '/onboarding', label: 'Profile', icon: 'person', mobileIcon: 'person', desktopOnly: true },
+    { path: '/today', label: t.nav.today, icon: 'grid_view', mobileIcon: 'event_available' },
+    { path: '/swaps', label: t.nav.swaps, icon: 'swap_horiz', mobileIcon: 'swap_horiz' },
+    { path: '/simulator', label: t.nav.simulator, icon: 'tune', mobileIcon: 'tune' },
+    { path: '/room-scan', label: t.nav.roomScan, icon: 'document_scanner', mobileIcon: 'document_scanner' },
+    { path: '/assistant', label: t.nav.assistant, icon: 'forum', mobileIcon: 'chat_bubble' },
+    { path: '/onboarding', label: t.nav.profile, icon: 'person', mobileIcon: 'person', desktopOnly: true },
   ];
 
   const householdInitials = profile.members.length > 0
@@ -35,10 +37,10 @@ export const Shell: React.FC = () => {
           <div className="p-space-lg flex items-center gap-space-sm">
             <div className="flex flex-col">
               <span className="font-headline-xl text-headline-md font-bold text-primary tracking-tight">
-                SaafDin
+                {t.appName}
               </span>
               <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
-                Clean Air Assistant
+                {t.appSubtitle}
               </span>
             </div>
           </div>
@@ -56,7 +58,7 @@ export const Shell: React.FC = () => {
                     {profile.location.name}
                   </span>
                   <span className="font-body-sm text-[11px] text-error font-semibold leading-tight">
-                    US AQI Monitored
+                    {t.banner.usAqi} Monitored
                   </span>
                 </div>
               </div>
@@ -102,7 +104,7 @@ export const Shell: React.FC = () => {
                   {profile.members[0]?.name ? `${profile.members[0].name}'s Household` : 'Sharma Family'}
                 </span>
                 <span className="font-body-sm text-[11px] text-on-surface-variant truncate">
-                  {profile.members.length} members
+                  {profile.members.length} {t.today.family.toLowerCase()}
                 </span>
               </div>
             </div>
@@ -120,16 +122,38 @@ export const Shell: React.FC = () => {
             <span className="font-label-md text-label-md text-on-surface font-semibold">{todayFormatted}</span>
             <span className="text-outline-variant font-label-md">·</span>
             <span className="font-label-md text-label-md text-on-surface-variant">
-              Forecast: Open-Meteo · updated live
+              {t.banner.forecastSource} · updated live
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-space-md">
+          {/* Language Toggle */}
+          <div className="flex items-center bg-surface-container-low rounded-full p-0.5 border border-surface-container text-[12px] font-bold">
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              className={`px-2.5 py-1 rounded-full transition-colors ${
+                language === 'en' ? 'bg-primary text-on-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage('hi')}
+              className={`px-2.5 py-1 rounded-full transition-colors ${
+                language === 'hi' ? 'bg-primary text-on-primary shadow-xs' : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              हिं
+            </button>
+          </div>
+
           {/* Disclaimer badge */}
           <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant text-[11px]">
             <span className="material-symbols-outlined text-[14px] text-outline">verified_user</span>
-            <span>Guidance based on CAMS model · Not medical advice</span>
+            <span>{t.disclaimer}</span>
           </div>
 
           <NavLink
@@ -147,17 +171,39 @@ export const Shell: React.FC = () => {
         <div className="h-16 px-4 flex items-center justify-between">
           <NavLink to="/today" className="flex items-center gap-2">
             <span className="font-headline-sm text-headline-sm font-bold text-primary tracking-tight">
-              SaafDin
+              {t.appName}
             </span>
           </NavLink>
 
           <div className="flex items-center gap-2">
+            {/* Mobile Language Toggle */}
+            <div className="flex items-center bg-surface-container-low rounded-full p-0.5 border border-surface-container text-[11px] font-bold">
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                className={`px-2 py-0.5 rounded-full transition-colors ${
+                  language === 'en' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'
+                }`}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('hi')}
+                className={`px-2 py-0.5 rounded-full transition-colors ${
+                  language === 'hi' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'
+                }`}
+              >
+                हिं
+              </button>
+            </div>
+
             <NavLink
               to="/onboarding"
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-low text-on-surface text-label-sm border border-surface-container"
             >
               <span className="material-symbols-outlined text-[14px] text-secondary">near_me</span>
-              <span className="truncate max-w-[120px] font-semibold">{profile.location.name}</span>
+              <span className="truncate max-w-[90px] font-semibold">{profile.location.name}</span>
             </NavLink>
 
             <NavLink
@@ -207,7 +253,7 @@ export const Shell: React.FC = () => {
                     {item.mobileIcon}
                   </span>
                   <span className="text-[11px] leading-tight">
-                    {item.mobileLabel || item.label}
+                    {item.label}
                   </span>
                 </NavLink>
               );

@@ -1,0 +1,40 @@
+import { TranslationDictionary } from './types';
+
+export const en: TranslationDictionary = {
+  appName: 'SaafDin',
+  appSubtitle: 'Clean Air Assistant',
+  nav: {
+    today: 'Today',
+    swaps: 'Swaps',
+    simulator: 'Simulator',
+    roomScan: 'Room Scan',
+    assistant: 'Assistant',
+    profile: 'Profile',
+  },
+  banner: {
+    usAqi: 'US AQI',
+    forecastSource: 'Forecast: Open-Meteo (CAMS)',
+    airSummary: 'Air Quality Summary',
+    pm25Conc: 'PM2.5 Conc.',
+    pm10Coarse: 'PM10 Coarse',
+    ambientTemp: 'Ambient Temp',
+    relHumidity: 'Rel. Humidity',
+    surfaceWind: 'Surface Wind',
+  },
+  today: {
+    title: "Action Plan for Today",
+    actionsDone: 'actions done',
+    todaysImpact: "Today's impact",
+    howCalculated: 'How this is calculated',
+    pm25Avoided: 'PM2.5 avoided',
+    co2Saved: 'CO₂ saved',
+    cigsAvoided: 'cigarettes avoided',
+    family: 'Family',
+    consultAssistant: 'Consult Air Assistant',
+    next24Hours: 'Next 24 hours',
+    worstWindow: 'Worst Window',
+    bestWindow: 'Best Window',
+    shareCard: 'Share Daily Impact Card',
+  },
+  disclaimer: 'Guidance based on CAMS atmospheric model · Not medical advice',
+};

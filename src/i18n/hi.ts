@@ -1,0 +1,40 @@
+import { TranslationDictionary } from './types';
+
+export const hi: TranslationDictionary = {
+  appName: 'साफ़ दिन',
+  appSubtitle: 'स्वच्छ वायु सहायक',
+  nav: {
+    today: 'आज',
+    swaps: 'सुझाव',
+    simulator: 'सिमुलेटर',
+    roomScan: 'रूम स्कैन',
+    assistant: 'सहायक',
+    profile: 'प्रोफ़ाइल',
+  },
+  banner: {
+    usAqi: 'यूएस एक्यूआई',
+    forecastSource: 'पूर्वानुमान: ओपन-मीटियो (CAMS)',
+    airSummary: 'वायु गुणवत्ता सारांश',
+    pm25Conc: 'PM2.5 सांद्रता',
+    pm10Coarse: 'PM10 कण',
+    ambientTemp: 'तापमान',
+    relHumidity: 'नमी (आर्द्रता)',
+    surfaceWind: 'हवा की गति',
+  },
+  today: {
+    title: 'आज की दैनिक कार्ययोजना',
+    actionsDone: 'कार्य पूर्ण',
+    todaysImpact: 'आज का स्वास्थ्य लाभ',
+    howCalculated: 'गणना कैसे की जाती है',
+    pm25Avoided: 'PM2.5 से बचाव',
+    co2Saved: 'CO₂ बचत',
+    cigsAvoided: 'सिगरेट के बराबर बचाव',
+    family: 'परिवार',
+    consultAssistant: 'सहायक से पूछें',
+    next24Hours: 'अगले 24 घंटे',
+    worstWindow: 'अत्यधिक प्रदूषण समय',
+    bestWindow: 'हवादार सर्वोत्तम समय',
+    shareCard: 'दैनिक प्रभाव कार्ड साझा करें',
+  },
+  disclaimer: 'CAMS वायुमंडलीय मॉडल पर आधारित मार्गदर्शन · चिकित्सीय सलाह नहीं',
+};
