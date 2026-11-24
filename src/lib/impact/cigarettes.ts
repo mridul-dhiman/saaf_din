@@ -78,8 +78,8 @@ export interface ActionWithReceipt {
 
 /**
  * Calculates total cigarette equivalents avoided across qualifying actions.
- * Only includes actions that have a non-null exposureAvoidedUg.
- * If an action's hours are missing, it drops out of the sum.
+ * Only actions whose cigarette value is non-null are counted.
+ * If an action's hours are missing or slices are absent, it drops out of the cigarette sum.
  */
 export function calcTotalCigarettesAvoided(
   actions: ActionWithReceipt[],
@@ -87,7 +87,6 @@ export function calcTotalCigarettesAvoided(
 ): number {
   let totalCigs = 0;
   for (const act of actions) {
-    if (act.impact.exposureAvoidedUg === null) continue;
     if (!act.impact.baselineSlices || !act.impact.alternativeSlices) continue;
 
     const actionCigs = calcActionCigarettesAvoided(

@@ -14,7 +14,9 @@ import {
 } from '../cigarettes';
 import { MASK_FACTORS, EMISSION_FACTORS } from '../constants';
 import { computeActionImpact } from '../actionImpact';
-import { Profile, PlannedAction } from '../../../types';
+import { scoreAndFilterSwaps } from '../swaps';
+import { computeSimulationScenario } from '../simulator';
+import { Profile, PlannedAction, HourlyForecastPoint } from '../../../types';
 
 const MOCK_PROFILE: Profile = {
   location: { name: 'Delhi', lat: 28.61, lon: 77.23 },
@@ -334,5 +336,239 @@ describe('Impact Model Unit Tests (IMPACT_MODEL.md Section 7)', () => {
       lookup
     );
     expect(totalCigs).toBeCloseTo(singleActionCigs!, 5);
+  });
+});
+
+describe('Phase 2: Swaps and Simulator Impact Model Tests', () => {
+  const points24h: HourlyForecastPoint[] = Array.from({ length: 24 }, (_, h) => ({
+    time: `2026-11-24T${String(h).padStart(2, '0')}:00:00Z`,
+    hour: h,
+    pm2_5: 150,
+    pm10: 220,
+    us_aqi: 200,
+    temperature_2m: 22,
+    relative_humidity_2m: 55,
+    wind_speed_10m: 6,
+  }));
+
+  // Test A: Swap filtering based on profile
+  it('filters swaps according to user profile conditions', () => {
+    // 1. Profile with child member and LPG cooking and car commute and outdoor routine
+    const profileWithChild: Profile = {
+      ...MOCK_PROFILE,
+      members: [
+        {
+          id: 'm1',
+          name: 'Arjun',
+          ageGroup: 'adult',
+          sensitivities: [],
+          routine: { label: 'Morning run', start: '06:00', end: '07:00', outdoors: true, intensity: 'moderate' },
+        },
+        { id: 'm2', name: 'Aarav', ageGroup: 'child', sensitivities: ['asthma'] },
+      ],
+      cookingFuel: 'lpg',
+      commute: { ...MOCK_PROFILE.commute, mode: 'car_petrol' },
+    };
+
+    const swaps1 = scoreAndFilterSwaps(profileWithChild, points24h);
+    const ids1 = swaps1.map((s) => s.id);
+    expect(ids1).toContain('swap_school_run');
+    expect(ids1).toContain('swap_office_commute');
+    expect(ids1).toContain('swap_home_cooking');
+    expect(ids1).toContain('swap_fitness_workout');
+
+    // School run has no figures until Phase 5 onboarding captures school run times
+    const schoolSwap = swaps1.find((s) => s.id === 'swap_school_run');
+    expect(schoolSwap?.exposureAvoidedUg).toBeNull();
+    expect(schoolSwap?.co2SavedKg).toBeNull();
+    expect(schoolSwap?.cigarettesAvoided).toBeNull();
+    expect(schoolSwap?.specialBenefit).toBe('Shields developing lungs from direct roadside tailpipe emissions');
+
+    // 2. Profile without child: no school run swap
+    const profileNoChild: Profile = {
+      ...profileWithChild,
+      members: [
+        {
+          id: 'm1',
+          name: 'Arjun',
+          ageGroup: 'adult',
+          sensitivities: [],
+          routine: { label: 'Morning run', start: '06:00', end: '07:00', outdoors: true, intensity: 'moderate' },
+        },
+      ],
+    };
+    const swapsNoChild = scoreAndFilterSwaps(profileNoChild, points24h);
+    expect(swapsNoChild.map((s) => s.id)).not.toContain('swap_school_run');
+
+    // 3. Profile who commutes by metro: no metro swap
+    const profileMetro: Profile = {
+      ...profileWithChild,
+      commute: { ...profileWithChild.commute, mode: 'metro' },
+    };
+    const swapsMetro = scoreAndFilterSwaps(profileMetro, points24h);
+    expect(swapsMetro.map((s) => s.id)).not.toContain('swap_office_commute');
+
+    // 4. Profile with induction cooking: no cooking swap
+    const profileInduction: Profile = {
+      ...profileWithChild,
+      cookingFuel: 'induction',
+    };
+    const swapsInduction = scoreAndFilterSwaps(profileInduction, points24h);
+    expect(swapsInduction.map((s) => s.id)).not.toContain('swap_home_cooking');
+
+    // 5. Profile with no outdoor routine: no fitness swap
+    const profileNoOutdoor: Profile = {
+      ...profileWithChild,
+      members: [
+        {
+          id: 'm1',
+          name: 'Arjun',
+          ageGroup: 'adult',
+          sensitivities: [],
+          routine: { label: 'Gym indoor', start: '06:00', end: '07:00', outdoors: false, intensity: 'moderate' },
+        },
+      ],
+    };
+    const swapsNoOutdoor = scoreAndFilterSwaps(profileNoOutdoor, points24h);
+    expect(swapsNoOutdoor.map((s) => s.id)).not.toContain('swap_fitness_workout');
+  });
+
+  // Test B: Swap with missing forecast hour returns null figures
+  it('returns null figures for a swap when forecast for its hours is missing or distance is zero', () => {
+    // Office commute departs 08:30, returns 18:00
+    // Missing hour 8 and 9
+    const pointsMissing = points24h.map((p, idx) => {
+      if (idx === 8 || idx === 9) return { ...p, pm2_5: null };
+      return p;
+    });
+
+    const swaps = scoreAndFilterSwaps(MOCK_PROFILE, pointsMissing);
+    const commuteSwap = swaps.find((s) => s.id === 'swap_office_commute');
+    expect(commuteSwap).toBeDefined();
+    expect(commuteSwap?.exposureAvoidedUg).toBeNull();
+    expect(commuteSwap?.cigarettesAvoided).toBeNull();
+
+    // Zero distance commute gives null figures
+    const profileZeroDistance: Profile = {
+      ...MOCK_PROFILE,
+      commute: { ...MOCK_PROFILE.commute, distanceKm: 0 },
+    };
+    const swapsZero = scoreAndFilterSwaps(profileZeroDistance, points24h);
+    const commuteZero = swapsZero.find((s) => s.id === 'swap_office_commute');
+    expect(commuteZero?.exposureAvoidedUg).toBeNull();
+    expect(commuteZero?.co2SavedKg).toBeNull();
+    expect(commuteZero?.cigarettesAvoided).toBeNull();
+
+    // In simulator, zero distance also returns null figures
+    const simZero = computeSimulationScenario(profileZeroDistance, points24h, {
+      activity: 'commute',
+      timeSlot: '08:30',
+      selectedMemberId: 'm1',
+    });
+    expect(simZero.durationLabel).toBe('Commute distance not specified');
+    expect(simZero.baseline.inhaledUg).toBeNull();
+    expect(simZero.baseline.co2Kg).toBeNull();
+    expect(simZero.exposureAvoidedUg).toBeNull();
+  });
+
+  // Test C: Simulator result changes when forecast at selected hour changes
+  it('changes simulator results when hourly forecast at selected hour changes', () => {
+    // 08:30 slot: hour 8 and 9
+    const pointsLow = points24h.map((p) => ({ ...p, pm2_5: 50 }));
+    const pointsHigh = points24h.map((p) => ({ ...p, pm2_5: 300 }));
+
+    const resLow = computeSimulationScenario(MOCK_PROFILE, pointsLow, {
+      activity: 'exercise',
+      timeSlot: '08:30',
+      selectedMemberId: 'm1',
+    });
+
+    const resHigh = computeSimulationScenario(MOCK_PROFILE, pointsHigh, {
+      activity: 'exercise',
+      timeSlot: '08:30',
+      selectedMemberId: 'm1',
+    });
+
+    expect(resLow.baseline.inhaledUg).not.toBeNull();
+    expect(resHigh.baseline.inhaledUg).not.toBeNull();
+    expect(resHigh.baseline.inhaledUg!).toBeGreaterThan(resLow.baseline.inhaledUg!);
+    expect(resHigh.exposureAvoidedUg!).toBeGreaterThan(resLow.exposureAvoidedUg!);
+  });
+
+  // Test D: Exercise simulator uses equal intensity for baseline and alternative
+  it('uses equal intensity for exercise simulator in baseline and alternative', () => {
+    // Moderate intensity: IR = 1.6 m³/h for adult
+    // Duration: 1 hour (08:30 - 09:30)
+    // PM2.5 = 100 µg/m³
+    // Baseline: outdoors (F_env = 1.0, F_mask = 1.0) -> inhaled = 100 * 1.0 * 1.0 * 1.6 * 1.0 = 160 µg
+    // Alternative: profile hasPurifier = true -> indoors_closed_purifier (F_env = 0.2, F_mask = 1.0)
+    // Alternative inhaled = 100 * 0.2 * 1.0 * 1.6 * 1.0 = 32 µg
+    // Avoided = 160 - 32 = 128 µg
+    // Percentage cut = (160 - 32) / 160 = 80%
+    const points100 = points24h.map((p) => ({ ...p, pm2_5: 100 }));
+
+    const resPurifier = computeSimulationScenario(
+      { ...MOCK_PROFILE, hasPurifier: true },
+      points100,
+      {
+        activity: 'exercise',
+        timeSlot: '08:30',
+        selectedMemberId: 'm1',
+      }
+    );
+
+    expect(resPurifier.baseline.inhaledUg).toBe(160);
+    expect(resPurifier.alternative.inhaledUg).toBe(32);
+    expect(resPurifier.exposureAvoidedUg).toBe(128);
+    expect(resPurifier.percentageCut).toBe(80);
+    expect(resPurifier.verdict).toContain('~80%');
+  });
+
+  // Test E: Ventilation without purifier uses indoors_closed (penetration 0.5)
+  it('ventilation without purifier uses indoors_closed instead of purifier', () => {
+    // Adult rest: IR = 0.3 m³/h
+    // Duration: 1 hour (08:30 - 09:30)
+    // PM2.5 = 100 µg/m³
+    // Baseline: indoors_open (F_env = 0.9) -> 100 * 0.9 * 0.3 = 27 µg
+    // Without purifier: altEnv = indoors_closed (F_env = 0.5) -> 100 * 0.5 * 0.3 = 15 µg
+    // Avoided = 27 - 15 = 12 µg
+    const points100 = points24h.map((p) => ({ ...p, pm2_5: 100 }));
+
+    const resNoPurifier = computeSimulationScenario(
+      { ...MOCK_PROFILE, hasPurifier: false },
+      points100,
+      {
+        activity: 'ventilation',
+        timeSlot: '08:30',
+        selectedMemberId: 'm1',
+      }
+    );
+
+    expect(resNoPurifier.baseline.inhaledUg).toBe(27);
+    expect(resNoPurifier.alternative.inhaledUg).toBe(15);
+    expect(resNoPurifier.exposureAvoidedUg).toBe(12);
+    expect(resNoPurifier.alternative.title).toBe('Sealed Room with Windows Closed');
+  });
+
+  // Test F: Missing forecast hour in simulator yields null figures and no percentage in verdict
+  it('returns null figures and plain copy verdict when forecast hour is missing', () => {
+    const pointsMissing = points24h.map((p, idx) => {
+      if (idx === 8 || idx === 9) return { ...p, pm2_5: null };
+      return p;
+    });
+
+    const res = computeSimulationScenario(MOCK_PROFILE, pointsMissing, {
+      activity: 'commute',
+      timeSlot: '08:30',
+      selectedMemberId: 'm1',
+    });
+
+    expect(res.baseline.inhaledUg).toBeNull();
+    expect(res.alternative.inhaledUg).toBeNull();
+    expect(res.exposureAvoidedUg).toBeNull();
+    expect(res.percentageCut).toBeNull();
+    // Verdict must NOT contain any "%" or "µg"
+    expect(res.verdict).not.toContain('%');
+    expect(res.verdict).not.toContain('µg');
   });
 });

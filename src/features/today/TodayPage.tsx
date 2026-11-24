@@ -129,17 +129,19 @@ export const TodayPage: React.FC = () => {
   const completedCount = completedActions.length;
   const completionPercentage = totalActionsCount > 0 ? Math.round((completedCount / totalActionsCount) * 100) : 0;
 
-  // Qualifying actions: ticked actions whose receipt is non-null
+  // Qualifying actions: ticked actions where exposureAvoidedUg OR co2SavedKg is non-null
   const qualifyingActions = useMemo(() => {
-    return actions.filter((a) => a.completed && a.impact.exposureAvoidedUg !== null);
+    return actions.filter(
+      (a) => a.completed && (a.impact.exposureAvoidedUg !== null || a.impact.co2SavedKg !== null)
+    );
   }, [actions]);
 
   const totalPm25AvoidedUg = useMemo(() => {
-    return qualifyingActions.reduce((acc, a) => acc + (a.impact.exposureAvoidedUg as number), 0);
+    return qualifyingActions.reduce((acc, a) => acc + (a.impact.exposureAvoidedUg ?? 0), 0);
   }, [qualifyingActions]);
 
   const totalCo2SavedKg = useMemo(() => {
-    const sum = qualifyingActions.reduce((acc, a) => acc + (a.impact.co2SavedKg || 0), 0);
+    const sum = qualifyingActions.reduce((acc, a) => acc + (a.impact.co2SavedKg ?? 0), 0);
     return Number(sum.toFixed(1));
   }, [qualifyingActions]);
 

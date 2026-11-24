@@ -1,16 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useProfile } from '../../context/ProfileContext';
 import { currentForecastProvider } from '../../services/forecast';
-import { TravelMode, Intensity } from '../../types';
-import { calcInhaledUg, calcExposureAvoided, getTimeSlices, calcTravelCo2Kg, calcTravelCo2SavedKg } from '../../lib/impact';
+import { HourlyForecastPoint } from '../../types';
+import { computeSimulationScenario, ScenarioActivity } from '../../lib/impact';
 import { ReceiptModal } from '../../components/ReceiptModal';
-import { EnrichedAction } from '../../lib/impact/rulePlanner';
-
-type ScenarioActivity = 'commute' | 'exercise' | 'ventilation';
 
 export const SimulatorPage: React.FC = () => {
   const { profile } = useProfile();
-  const [currentPm25, setCurrentPm25] = useState<number | null>(145);
+  const [forecastPoints, setForecastPoints] = useState<HourlyForecastPoint[]>([]);
 
   // Selectors State
   const [activity, setActivity] = useState<ScenarioActivity>('commute');
@@ -25,193 +22,19 @@ export const SimulatorPage: React.FC = () => {
   useEffect(() => {
     currentForecastProvider.getHourly(profile.location.lat, profile.location.lon)
       .then((f) => {
-        if (f.points.length > 0) {
-          setCurrentPm25(f.points[0].pm2_5);
-        }
+        setForecastPoints(f.points);
       })
       .catch((e) => console.warn(e));
   }, [profile.location.lat, profile.location.lon]);
 
-  const selectedMember = useMemo(() => {
-    return profile.members.find((m) => m.id === selectedMemberId) || profile.members[0];
-  }, [selectedMemberId, profile.members]);
-
-  const ageGroup = selectedMember?.ageGroup || 'adult';
-
-  // Deterministic Impact Model Calculation
+  // Pure Deterministic Impact Model Calculation
   const simulationResults = useMemo(() => {
-    const timeSlices = getTimeSlices(timeSlot, `${parseInt(timeSlot.split(':')[0]) + 1}:30`);
-    const mockHourlyLookup = () => currentPm25;
-
-    if (activity === 'commute') {
-      const distanceKm = profile.commute.distanceKm || 18;
-      const baselineMode: TravelMode = profile.commute.mode || 'car_petrol';
-      const alternativeMode: TravelMode = 'metro';
-
-      const baselineInhaled = calcInhaledUg(timeSlices, mockHourlyLookup, {
-        ageGroup,
-        intensity: 'light',
-        env: 'car_closed_recirc',
-        mask: 'none',
-      });
-
-      const alternativeInhaled = calcInhaledUg(timeSlices, mockHourlyLookup, {
-        ageGroup,
-        intensity: 'light',
-        env: 'metro',
-        mask: 'n95',
-      });
-
-      const baselineCo2 = calcTravelCo2Kg(baselineMode, distanceKm);
-      const alternativeCo2 = calcTravelCo2Kg(alternativeMode, distanceKm);
-      const co2Saved = calcTravelCo2SavedKg(baselineMode, alternativeMode, distanceKm);
-      const avoidedUg = calcExposureAvoided(baselineInhaled, alternativeInhaled);
-
-      const hasPct = baselineInhaled !== null && alternativeInhaled !== null && baselineInhaled > 0;
-      const pct = hasPct ? Math.round(((baselineInhaled - alternativeInhaled) / baselineInhaled) * 100) : null;
-
-      let verdict = `Switching from solo car to Metro rail with an N95 mask`;
-      if (pct !== null && avoidedUg !== null) {
-        verdict += ` cuts ${selectedMember.name}'s inhaled particulate exposure by ~${pct}%`;
-      } else {
-        verdict += ` reduces ${selectedMember.name}'s inhaled particulate exposure`;
-      }
-      if (co2Saved !== null && co2Saved > 0) {
-        verdict += ` and prevents ${co2Saved} kg of tailpipe CO₂ emissions.`;
-      } else {
-        verdict += `.`;
-      }
-
-      return {
-        activityLabel: 'Work / School Commute',
-        baseline: {
-          title: 'Solo Petrol Car in Traffic',
-          envLabel: 'Vehicle Cabin (Recirc Off)',
-          maskLabel: 'No Mask',
-          inhaledUg: baselineInhaled !== null ? Math.round(baselineInhaled) : null,
-          co2Kg: Number(baselineCo2.toFixed(1)),
-        },
-        alternative: {
-          title: 'Metro Rail + N95 Mask',
-          envLabel: 'Air-Conditioned Metro Coach',
-          maskLabel: 'N95 Respirator',
-          inhaledUg: alternativeInhaled !== null ? Math.round(alternativeInhaled) : null,
-          co2Kg: Number(alternativeCo2.toFixed(1)),
-        },
-        exposureAvoidedUg: avoidedUg,
-        co2SavedKg: co2Saved,
-        verdict,
-      };
-    } else if (activity === 'exercise') {
-      const baselineInhaled = calcInhaledUg(timeSlices, mockHourlyLookup, {
-        ageGroup,
-        intensity: 'vigorous' as Intensity,
-        env: 'outdoors',
-        mask: 'none',
-      });
-
-      const alternativeInhaled = calcInhaledUg(timeSlices, mockHourlyLookup, {
-        ageGroup,
-        intensity: 'moderate' as Intensity,
-        env: 'indoors_closed_purifier',
-        mask: 'none',
-      });
-
-      const avoidedUg = calcExposureAvoided(baselineInhaled, alternativeInhaled);
-      const hasPct = baselineInhaled !== null && alternativeInhaled !== null && baselineInhaled > 0;
-      const pct = hasPct ? Math.round(((baselineInhaled - alternativeInhaled) / baselineInhaled) * 100) : null;
-
-      let verdict = `Shifting intense cardio indoors`;
-      if (pct !== null && avoidedUg !== null) {
-        verdict += ` cuts ${selectedMember.name}'s inhaled exposure by ~${pct}% during peak pollution hours, shielding sensitive respiratory airways.`;
-      } else {
-        verdict += ` reduces ${selectedMember.name}'s inhaled particulate exposure during peak pollution hours, shielding sensitive respiratory airways.`;
-      }
-
-      return {
-        activityLabel: 'Daily Workout & Exercise',
-        baseline: {
-          title: 'Roadside Outdoor Jog / Sports',
-          envLabel: 'Ambient Roadside Air',
-          maskLabel: 'Unmasked (Deep Breaths)',
-          inhaledUg: baselineInhaled !== null ? Math.round(baselineInhaled) : null,
-          co2Kg: null,
-        },
-        alternative: {
-          title: 'Indoor Treadmill / Gym with HEPA Purifier',
-          envLabel: 'Sealed Room with Purifier',
-          maskLabel: 'Filtered Indoor Air',
-          inhaledUg: alternativeInhaled !== null ? Math.round(alternativeInhaled) : null,
-          co2Kg: null,
-        },
-        exposureAvoidedUg: avoidedUg,
-        co2SavedKg: null,
-        verdict,
-      };
-    } else {
-      // Ventilation
-      const baselineInhaled = calcInhaledUg(timeSlices, mockHourlyLookup, {
-        ageGroup,
-        intensity: 'rest',
-        env: 'indoors_open',
-        mask: 'none',
-      });
-
-      const alternativeInhaled = calcInhaledUg(timeSlices, mockHourlyLookup, {
-        ageGroup,
-        intensity: 'rest',
-        env: 'indoors_closed_purifier',
-        mask: 'none',
-      });
-
-      const avoidedUg = calcExposureAvoided(baselineInhaled, alternativeInhaled);
-      const hasPct = baselineInhaled !== null && alternativeInhaled !== null && baselineInhaled > 0;
-      const pct = hasPct ? Math.round(((baselineInhaled - alternativeInhaled) / baselineInhaled) * 100) : null;
-
-      let verdict = `Keeping windows sealed and running indoor air filtration`;
-      if (pct !== null && avoidedUg !== null) {
-        verdict += ` cuts ${selectedMember.name}'s inhaled exposure by ~${pct}% compared to unventilated peak smog.`;
-      } else {
-        verdict += ` prevents acute particulate penetration while outdoor dispersion remains sluggish.`;
-      }
-
-      return {
-        activityLabel: 'Home Ventilation & Air Cleaning',
-        baseline: {
-          title: 'Open Windows during Inversion Peak',
-          envLabel: 'Outdoor Smog Infiltration',
-          maskLabel: 'Unfiltered Room',
-          inhaledUg: baselineInhaled !== null ? Math.round(baselineInhaled) : null,
-          co2Kg: null,
-        },
-        alternative: {
-          title: 'Sealed Room + Active Purifier Recirculation',
-          envLabel: 'HEPA Purified Sanctuary',
-          maskLabel: 'Closed & Filtered',
-          inhaledUg: alternativeInhaled !== null ? Math.round(alternativeInhaled) : null,
-          co2Kg: null,
-        },
-        exposureAvoidedUg: avoidedUg,
-        co2SavedKg: null,
-        verdict,
-      };
-    }
-  }, [activity, timeSlot, ageGroup, currentPm25, profile.commute, selectedMember.name]);
-
-  const dummyActionForModal: EnrichedAction = {
-    id: 'simulator_explainer',
-    type: 'change_commute_mode',
-    memberId: selectedMember.id,
-    start: timeSlot,
-    end: `${parseInt(timeSlot.split(':')[0]) + 1}:30`,
-    title: simulationResults.alternative.title,
-    reason: simulationResults.verdict,
-    params: {},
-    impact: {
-      exposureAvoidedUg: simulationResults.exposureAvoidedUg,
-      co2SavedKg: simulationResults.co2SavedKg,
-    },
-  };
+    return computeSimulationScenario(profile, forecastPoints, {
+      activity,
+      timeSlot,
+      selectedMemberId,
+    });
+  }, [profile, forecastPoints, activity, timeSlot, selectedMemberId]);
 
   return (
     <div className="flex flex-col gap-space-lg w-full pb-16">
@@ -241,7 +64,7 @@ export const SimulatorPage: React.FC = () => {
             <select
               value={activity}
               onChange={(e) => setActivity(e.target.value as ScenarioActivity)}
-              className="px-3 py-2.5 rounded-xl bg-surface-container-low border border-surface-container text-on-surface font-label-md text-label-md focus:outline-none focus:ring-1 focus:ring-primary"
+              className="px-3 py-2.5 rounded-xl bg-surface-container-low border border-surface-container text-on-surface font-label-md text-label-md focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
             >
               <option value="commute">Work / School Commute</option>
               <option value="exercise">Outdoor Workout &amp; Sports</option>
@@ -251,13 +74,18 @@ export const SimulatorPage: React.FC = () => {
 
           {/* Selector 2: Time Slot */}
           <div className="flex flex-col gap-1">
-            <label className="font-label-sm text-[11px] text-on-surface-variant uppercase font-bold tracking-wider">
-              2. Time of Day
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="font-label-sm text-[11px] text-on-surface-variant uppercase font-bold tracking-wider">
+                2. Time of Day
+              </label>
+              <span className="text-[11px] text-outline font-medium">
+                {simulationResults.durationLabel}
+              </span>
+            </div>
             <select
               value={timeSlot}
               onChange={(e) => setTimeSlot(e.target.value)}
-              className="px-3 py-2.5 rounded-xl bg-surface-container-low border border-surface-container text-on-surface font-label-md text-label-md focus:outline-none focus:ring-1 focus:ring-primary"
+              className="px-3 py-2.5 rounded-xl bg-surface-container-low border border-surface-container text-on-surface font-label-md text-label-md focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
             >
               <option value="08:30">08:30 AM (Morning Traffic Peak)</option>
               <option value="14:00">02:00 PM (Afternoon Dispersal Window)</option>
@@ -265,7 +93,7 @@ export const SimulatorPage: React.FC = () => {
             </select>
           </div>
 
-          {/* Selector 3: Family Member (Clean tags only, no fake COPD) */}
+          {/* Selector 3: Family Member */}
           <div className="flex flex-col gap-1">
             <label className="font-label-sm text-[11px] text-on-surface-variant uppercase font-bold tracking-wider">
               3. Family Member
@@ -273,7 +101,7 @@ export const SimulatorPage: React.FC = () => {
             <select
               value={selectedMemberId}
               onChange={(e) => setSelectedMemberId(e.target.value)}
-              className="px-3 py-2.5 rounded-xl bg-surface-container-low border border-surface-container text-on-surface font-label-md text-label-md focus:outline-none focus:ring-1 focus:ring-primary"
+              className="px-3 py-2.5 rounded-xl bg-surface-container-low border border-surface-container text-on-surface font-label-md text-label-md focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
             >
               {profile.members.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -338,7 +166,12 @@ export const SimulatorPage: React.FC = () => {
                 </span>
               </div>
               <div className="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
-                <div className="bg-error h-full rounded-full w-[90%]"></div>
+                <div
+                  className="bg-error h-full rounded-full transition-all"
+                  style={{
+                    width: simulationResults.baseline.inhaledUg !== null ? '100%' : '0%',
+                  }}
+                ></div>
               </div>
 
               {simulationResults.baseline.co2Kg !== null && (
@@ -410,7 +243,7 @@ export const SimulatorPage: React.FC = () => {
                   className="bg-primary h-full rounded-full transition-all"
                   style={{
                     width: simulationResults.alternative.inhaledUg !== null && simulationResults.baseline.inhaledUg !== null && simulationResults.baseline.inhaledUg > 0
-                      ? `${Math.max(15, Math.min(100, Math.round((simulationResults.alternative.inhaledUg / simulationResults.baseline.inhaledUg) * 100)))}%`
+                      ? `${Math.max(10, Math.min(100, Math.round((simulationResults.alternative.inhaledUg / simulationResults.baseline.inhaledUg) * 100)))}%`
                       : '0%',
                   }}
                 ></div>
@@ -451,7 +284,7 @@ export const SimulatorPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setAddedToPlan(!addedToPlan)}
-            className={`w-full md:w-auto px-5 py-2.5 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm ${
+            className={`w-full md:w-auto px-5 py-2.5 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer ${
               addedToPlan
                 ? 'bg-secondary-fixed text-on-secondary-fixed'
                 : 'bg-surface-container-lowest text-primary hover:bg-surface-container'
@@ -470,7 +303,7 @@ export const SimulatorPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowFormulaModal(true)}
-          className="flex items-center gap-1 text-secondary hover:underline font-semibold"
+          className="flex items-center gap-1 text-secondary hover:underline font-semibold cursor-pointer"
         >
           <span className="material-symbols-outlined text-[16px]">help_outline</span>
           <span>How we calculate exposure and emissions differences</span>
@@ -481,7 +314,8 @@ export const SimulatorPage: React.FC = () => {
       {/* Mathematical Audit Modal */}
       {showFormulaModal && (
         <ReceiptModal
-          action={dummyActionForModal}
+          formulaOnly
+          title="How Simulator Comparisons Are Calculated"
           onClose={() => setShowFormulaModal(false)}
         />
       )}

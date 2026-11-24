@@ -1,5 +1,11 @@
 import { AgeGroup, Intensity } from '../../types';
-import { ENV_FACTORS, INHALATION_RATES, MASK_FACTORS } from './constants';
+import {
+  ENV_FACTORS,
+  INHALATION_RATES,
+  MASK_FACTORS,
+  EnvFactorKey,
+  MaskFactorKey,
+} from './constants';
 
 export interface ExposureSlice {
   hour: number;
@@ -60,8 +66,8 @@ export function getTimeSlices(startStr: string, endStr: string): ExposureSlice[]
 export interface ActivityContext {
   ageGroup: AgeGroup;
   intensity: Intensity;
-  env: string;        // key in ENV_FACTORS or number
-  mask?: string;      // key in MASK_FACTORS or number
+  env: EnvFactorKey;
+  mask?: MaskFactorKey;
   fEnvOverride?: number;
   fMaskOverride?: number;
 }
@@ -72,11 +78,20 @@ export interface ActivityContext {
  * Built from the points array so Phase 4 can switch to timestamp keys without touching callers.
  */
 export function makePm25Lookup(
-  points: { hour: number; pm2_5: number | null; time?: string }[]
+  points: { hour?: number; pm2_5: number | null; time?: string }[]
 ): (hour: number) => number | null {
   const map = new Map<number, number | null>();
   for (const pt of points) {
-    map.set(pt.hour, pt.pm2_5 !== undefined ? pt.pm2_5 : null);
+    let h = pt.hour;
+    if (h === undefined && pt.time) {
+      const parsed = parseInt(pt.time.split('T')[1]?.split(':')[0] ?? '', 10);
+      if (!isNaN(parsed)) {
+        h = parsed;
+      }
+    }
+    if (h !== undefined) {
+      map.set(h, pt.pm2_5 !== undefined ? pt.pm2_5 : null);
+    }
   }
   return (hour: number) => {
     const val = map.get(hour);
@@ -96,9 +111,9 @@ export function calcInhaledUg(
 ): number | null {
   if (slices.length === 0) return 0;
 
-  const ir = INHALATION_RATES[context.intensity]?.[context.ageGroup] ?? 0.7;
-  const fEnv = context.fEnvOverride ?? (ENV_FACTORS[context.env] ?? 1.0);
-  const fMask = context.fMaskOverride ?? (context.mask ? (MASK_FACTORS[context.mask] ?? 1.0) : 1.0);
+  const ir = INHALATION_RATES[context.intensity][context.ageGroup];
+  const fEnv = context.fEnvOverride ?? ENV_FACTORS[context.env];
+  const fMask = context.fMaskOverride ?? (context.mask ? MASK_FACTORS[context.mask] : 1.0);
 
   let totalInhaled = 0;
   for (const slice of slices) {

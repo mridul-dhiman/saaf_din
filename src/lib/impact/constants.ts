@@ -30,9 +30,23 @@ export const INHALATION_RATES: Record<Intensity, Record<AgeGroup, number>> = {
 /**
  * Environment penetration factor F_env
  * Fraction of outdoor PM2.5 that reaches the person
- * Source: Indoor/outdoor PM2.5 infiltration literature defaults
+ * Source: assumption (indoor/outdoor PM2.5 infiltration literature defaults)
  */
-export const ENV_FACTORS: Record<string, number> = {
+export type EnvFactorKey =
+  | 'outdoors'
+  | 'indoors_open'
+  | 'indoors_closed'
+  | 'indoors_closed_purifier'
+  | 'car_closed_recirc'
+  | 'car_open'
+  | 'auto_rickshaw'
+  | 'metro'
+  | 'bus'
+  | 'walk'
+  | 'cycle'
+  | 'two_wheeler';
+
+export const ENV_FACTORS: Record<EnvFactorKey, number> = {
   outdoors: 1.0,
   indoors_open: 0.9,
   indoors_closed: 0.5,
@@ -50,8 +64,11 @@ export const ENV_FACTORS: Record<string, number> = {
 /**
  * Mask penetration factor F_mask
  * Fraction of PM2.5 that penetrates the mask
+ * Source: assumption (mask filtration defaults)
  */
-export const MASK_FACTORS: Record<string, number> = {
+export type MaskFactorKey = 'none' | 'cloth' | 'surgical' | 'n95' | 'ffp2';
+
+export const MASK_FACTORS: Record<MaskFactorKey, number> = {
   none: 1.0,
   cloth: 0.7,
   surgical: 0.7,
@@ -83,3 +100,34 @@ export const EMISSION_FACTORS: Record<TravelMode, number> = {
  */
 export const CIGARETTE_EQUIVALENT_UG_PER_M3_24H = 22;
 export const CIGARETTE_HOURS_DENOMINATOR = 22 * 24; // 528 µg·h/m³
+
+/**
+ * Average urban travel speeds (km/h) for Indian cities
+ * Used to derive trip duration from commute distance: duration_hours = distance_km / speed_kmh
+ * Source: assumption (no verified source)
+ */
+export const URBAN_SPEEDS_KMH: Record<TravelMode, number> = {
+  walk: 4.5,
+  cycle: 12,
+  metro: 32,
+  bus: 15,
+  auto_cng: 20,
+  two_wheeler: 25,
+  car_petrol: 20,
+  car_diesel: 20,
+  car_cng: 20,
+  car_ev: 20,
+  carpool: 20,
+};
+
+/**
+ * Assumed typical one-way school transit distance (km)
+ * Source: assumption, no source
+ */
+export const SCHOOL_RUN_DISTANCE_KM = 6;
+
+/**
+ * Standard weekly frequencies for habit alternatives
+ */
+export const WEEKLY_COMMUTE_DAYS = 5;
+export const WEEKLY_DAILY_DAYS = 7;
