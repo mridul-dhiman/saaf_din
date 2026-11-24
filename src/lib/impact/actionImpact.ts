@@ -1,10 +1,13 @@
-import { PlannedAction, Profile, Member } from '../../types';
+import { PlannedAction, Profile, Member, EffectiveSlice } from '../../types';
 import { calcExposureAvoided, calcInhaledUg, getTimeSlices } from './exposure';
 import { calcTravelCo2SavedKg } from './emissions';
+import { ENV_FACTORS, MASK_FACTORS } from './constants';
 
 export interface ActionImpactResult {
   exposureAvoidedUg: number | null;
   co2SavedKg: number | null;
+  baselineSlices?: EffectiveSlice[];
+  alternativeSlices?: EffectiveSlice[];
   details?: string;
 }
 
@@ -15,7 +18,7 @@ export interface ActionImpactResult {
 export function computeActionImpact(
   action: PlannedAction,
   profile: Profile,
-  getHourlyPm25: (hour: number) => number
+  getHourlyPm25: (hour: number) => number | null
 ): ActionImpactResult {
   const slices = getTimeSlices(action.start, action.end);
   const member: Member | undefined = action.memberId
@@ -40,6 +43,8 @@ export function computeActionImpact(
       return {
         exposureAvoidedUg: calcExposureAvoided(baselineInhaled, altInhaled),
         co2SavedKg: null,
+        baselineSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: 0.9, fMask: 1.0 })),
+        alternativeSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: 0.5, fMask: 1.0 })),
       };
     }
 
@@ -59,13 +64,16 @@ export function computeActionImpact(
       return {
         exposureAvoidedUg: calcExposureAvoided(baselineInhaled, altInhaled),
         co2SavedKg: null,
+        baselineSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: 0.5, fMask: 1.0 })),
+        alternativeSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: 0.2, fMask: 1.0 })),
       };
     }
 
     case 'wear_mask': {
       // Baseline: outdoors without mask (F_mask = 1.0)
-      // Alternative: outdoors with N95 mask (F_mask = 0.3)
+      // Alternative: outdoors with mask
       const maskType = (action.params?.mask as string) || 'n95';
+      const fMaskAlt = MASK_FACTORS[maskType] ?? 0.3;
       const intensity = (action.params?.intensity as any) || 'light';
       const baselineInhaled = calcInhaledUg(slices, getHourlyPm25, {
         ageGroup,
@@ -82,6 +90,8 @@ export function computeActionImpact(
       return {
         exposureAvoidedUg: calcExposureAvoided(baselineInhaled, altInhaled),
         co2SavedKg: null,
+        baselineSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: 1.0, fMask: 1.0 })),
+        alternativeSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: 1.0, fMask: fMaskAlt })),
       };
     }
 
@@ -90,6 +100,7 @@ export function computeActionImpact(
       // Alternative: indoors closed with purifier (0.2) or closed (0.5)
       const intensity = (action.params?.intensity as any) || 'moderate';
       const targetEnv = profile.hasPurifier ? 'indoors_closed_purifier' : 'indoors_closed';
+      const altFenv = profile.hasPurifier ? 0.2 : 0.5;
       const baselineInhaled = calcInhaledUg(slices, getHourlyPm25, {
         ageGroup,
         intensity,
@@ -103,6 +114,8 @@ export function computeActionImpact(
       return {
         exposureAvoidedUg: calcExposureAvoided(baselineInhaled, altInhaled),
         co2SavedKg: null,
+        baselineSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: 1.0, fMask: 1.0 })),
+        alternativeSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: altFenv, fMask: 1.0 })),
       };
     }
 
@@ -126,6 +139,8 @@ export function computeActionImpact(
       return {
         exposureAvoidedUg: calcExposureAvoided(baselineInhaled, altInhaled),
         co2SavedKg: null, // Shifting outdoor time does not save CO2
+        baselineSlices: originalSlices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: 1.0, fMask: 1.0 })),
+        alternativeSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: 1.0, fMask: 1.0 })),
       };
     }
 
@@ -137,6 +152,8 @@ export function computeActionImpact(
       // Inhaled calculation
       const baselineEnv = baselineMode === 'metro' ? 'metro' : baselineMode === 'bus' ? 'bus' : 'car_closed_recirc';
       const targetEnv = targetMode === 'metro' ? 'metro' : targetMode === 'bus' ? 'bus' : 'outdoors';
+      const baseFenv = ENV_FACTORS[baselineEnv] ?? 0.4;
+      const targetFenv = ENV_FACTORS[targetEnv] ?? 0.5;
 
       const baselineInhaled = calcInhaledUg(slices, getHourlyPm25, {
         ageGroup,
@@ -153,6 +170,8 @@ export function computeActionImpact(
       return {
         exposureAvoidedUg: calcExposureAvoided(baselineInhaled, altInhaled),
         co2SavedKg: co2Saved,
+        baselineSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: baseFenv, fMask: 1.0 })),
+        alternativeSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: targetFenv, fMask: 1.0 })),
       };
     }
 
@@ -162,6 +181,7 @@ export function computeActionImpact(
       const originalSlices = getTimeSlices(originalStart, originalEnd);
       const mode = (action.params?.mode as any) || profile.commute.mode;
       const env = mode === 'metro' ? 'metro' : mode === 'bus' ? 'bus' : 'car_closed_recirc';
+      const envF = ENV_FACTORS[env] ?? 0.4;
 
       const baselineInhaled = calcInhaledUg(originalSlices, getHourlyPm25, {
         ageGroup,
@@ -177,6 +197,8 @@ export function computeActionImpact(
       return {
         exposureAvoidedUg: calcExposureAvoided(baselineInhaled, altInhaled),
         co2SavedKg: null, // Time shift saves no CO2
+        baselineSlices: originalSlices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: envF, fMask: 1.0 })),
+        alternativeSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: envF, fMask: 1.0 })),
       };
     }
 
@@ -201,6 +223,8 @@ export function computeActionImpact(
       return {
         exposureAvoidedUg: calcExposureAvoided(baselineInhaled, altInhaled),
         co2SavedKg: null,
+        baselineSlices: worstSlices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: 0.9, fMask: 1.0 })),
+        alternativeSlices: slices.map((s) => ({ hour: s.hour, fraction: s.fraction, fEnv: 0.9, fMask: 1.0 })),
       };
     }
 

@@ -1,8 +1,8 @@
 export interface ForecastHour {
-  hour: number;      // 0-23
-  pm2_5: number;     // µg/m³
-  time?: string;     // ISO or formatted
-  us_aqi?: number;
+  hour: number;          // 0-23
+  pm2_5: number | null;  // µg/m³
+  time?: string;         // ISO or formatted
+  us_aqi?: number | null;
 }
 
 export interface AqiWindow {
@@ -58,17 +58,22 @@ export function findBestAndWorstWindows(
     for (let i = 0; i <= daytimeHours.length - len; i++) {
       const slice = daytimeHours.slice(i, i + len);
 
-      // Verify hours are contiguous
+      // Verify hours are contiguous and no hour has null PM2.5
       let isContiguous = true;
-      for (let j = 1; j < slice.length; j++) {
-        if (slice[j].hour !== slice[j - 1].hour + 1) {
+      let hasNullPm = false;
+      for (let j = 0; j < slice.length; j++) {
+        if (slice[j].pm2_5 === null || slice[j].pm2_5 === undefined || isNaN(slice[j].pm2_5 as number)) {
+          hasNullPm = true;
+          break;
+        }
+        if (j > 0 && slice[j].hour !== slice[j - 1].hour + 1) {
           isContiguous = false;
           break;
         }
       }
-      if (!isContiguous) continue;
+      if (!isContiguous || hasNullPm) continue;
 
-      const sumPm = slice.reduce((acc, h) => acc + h.pm2_5, 0);
+      const sumPm = slice.reduce((acc, h) => acc + (h.pm2_5 as number), 0);
       const mean = sumPm / len;
 
       if (mean < bestMean) {
@@ -122,9 +127,9 @@ export function findBestAndWorstWindows(
   const canVentilate = bestWindow ? bestWindow.meanPm25 <= VENTILATION_THRESHOLD_UG : false;
 
   let advisory = '';
-  if (!canVentilate) {
-    advisory = `Air quality remains severe throughout the day (lowest average is ${bestWindow?.meanPm25 ?? 'high'} µg/m³). Keep windows closed and rely on indoor air cleaning.`;
-  } else if (bestWindow) {
+  if (bestWindow && !canVentilate) {
+    advisory = `Air quality remains severe throughout the day (lowest average is ${bestWindow.meanPm25} µg/m³). Keep windows closed and rely on indoor air cleaning.`;
+  } else if (bestWindow && canVentilate) {
     advisory = `Best ventilation window is between ${bestWindow.startTime} and ${bestWindow.endTime} (avg PM2.5: ${bestWindow.meanPm25} µg/m³).`;
   }
 

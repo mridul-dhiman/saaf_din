@@ -48,6 +48,10 @@ export class OpenMeteoProvider implements ForecastProvider {
       if (startIndex === -1) startIndex = 0;
 
       const next24Times = times.slice(startIndex, startIndex + 24);
+      const toNullableRound = (val: number | undefined | null): number | null => {
+        return val !== undefined && val !== null && !isNaN(val) ? Math.round(val) : null;
+      };
+
       const points: HourlyForecastPoint[] = next24Times.map((timeStr, idx) => {
         const fullIdx = startIndex + idx;
         const hour = parseInt(timeStr.split('T')[1].split(':')[0], 10);
@@ -55,12 +59,12 @@ export class OpenMeteoProvider implements ForecastProvider {
         return {
           time: timeStr,
           hour,
-          pm2_5: Math.round(pm25Arr[fullIdx] ?? 120),
-          pm10: Math.round(pm10Arr[fullIdx] ?? 200),
-          us_aqi: Math.round(usAqiArr[fullIdx] ?? 185),
-          temperature_2m: Math.round(tempArr[fullIdx] ?? 24),
-          relative_humidity_2m: Math.round(rhArr[fullIdx] ?? 60),
-          wind_speed_10m: Math.round(windArr[fullIdx] ?? 8),
+          pm2_5: toNullableRound(pm25Arr[fullIdx]),
+          pm10: toNullableRound(pm10Arr[fullIdx]),
+          us_aqi: toNullableRound(usAqiArr[fullIdx]),
+          temperature_2m: toNullableRound(tempArr[fullIdx]),
+          relative_humidity_2m: toNullableRound(rhArr[fullIdx]),
+          wind_speed_10m: toNullableRound(windArr[fullIdx]),
         };
       });
 

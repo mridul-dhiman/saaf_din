@@ -11,7 +11,7 @@ import { generateRuleBasedPlan, EnrichedAction } from '../../lib/impact/rulePlan
 import { generateGeminiPlan } from '../../services/gemini';
 import { ReceiptModal } from '../../components/ReceiptModal';
 import { ShareCardModal } from '../../components/ShareCardModal';
-import { formatCigarettes } from '../../lib/impact/cigarettes';
+import { formatCigarettes, calcTotalCigarettesAvoided, makePm25Lookup } from '../../lib/impact';
 
 export const TodayPage: React.FC = () => {
   const { profile } = useProfile();
@@ -129,22 +129,27 @@ export const TodayPage: React.FC = () => {
   const completedCount = completedActions.length;
   const completionPercentage = totalActionsCount > 0 ? Math.round((completedCount / totalActionsCount) * 100) : 0;
 
+  // Qualifying actions: ticked actions whose receipt is non-null
+  const qualifyingActions = useMemo(() => {
+    return actions.filter((a) => a.completed && a.impact.exposureAvoidedUg !== null);
+  }, [actions]);
+
   const totalPm25AvoidedUg = useMemo(() => {
-    return completedActions.reduce((acc, a) => acc + (a.impact.exposureAvoidedUg || 0), 0);
-  }, [completedActions]);
+    return qualifyingActions.reduce((acc, a) => acc + (a.impact.exposureAvoidedUg as number), 0);
+  }, [qualifyingActions]);
 
   const totalCo2SavedKg = useMemo(() => {
-    const sum = completedActions.reduce((acc, a) => acc + (a.impact.co2SavedKg || 0), 0);
+    const sum = qualifyingActions.reduce((acc, a) => acc + (a.impact.co2SavedKg || 0), 0);
     return Number(sum.toFixed(1));
-  }, [completedActions]);
+  }, [qualifyingActions]);
 
   // Cigarette equivalents avoided today (Berkeley Earth: 22 µg/m³ * 24h = 1 cig)
   const approxCigarettesAvoided = useMemo(() => {
-    if (totalPm25AvoidedUg <= 0) return '0';
-    // Daily exposure delta converted to approx effective cigarettes
-    const approx = totalPm25AvoidedUg / 100;
-    return formatCigarettes(approx);
-  }, [totalPm25AvoidedUg]);
+    if (!forecast || qualifyingActions.length === 0) return null;
+    const lookup = makePm25Lookup(forecast.points);
+    const cigs = calcTotalCigarettesAvoided(qualifyingActions, lookup);
+    return formatCigarettes(cigs);
+  }, [qualifyingActions, forecast]);
 
   const currentPoint = forecast?.points[0];
 
@@ -321,35 +326,43 @@ export const TodayPage: React.FC = () => {
                   </button>
                 </div>
 
-                {/* 3 Metric Tiles */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col items-center text-center">
-                    <span className="font-headline-sm text-[17px] text-primary font-bold">
-                      {totalPm25AvoidedUg} µg
-                    </span>
-                    <span className="font-label-sm text-[10px] text-on-surface-variant mt-0.5 leading-tight">
-                      PM2.5 avoided
-                    </span>
-                  </div>
+                {/* Metric Tiles (Hidden if no action qualifies or all values 0) */}
+                {qualifyingActions.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {totalPm25AvoidedUg > 0 && (
+                      <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col items-center text-center">
+                        <span className="font-headline-sm text-[17px] text-primary font-bold">
+                          {totalPm25AvoidedUg} µg
+                        </span>
+                        <span className="font-label-sm text-[10px] text-on-surface-variant mt-0.5 leading-tight">
+                          PM2.5 avoided
+                        </span>
+                      </div>
+                    )}
 
-                  <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col items-center text-center">
-                    <span className="font-headline-sm text-[17px] text-primary font-bold">
-                      {totalCo2SavedKg} kg
-                    </span>
-                    <span className="font-label-sm text-[10px] text-on-surface-variant mt-0.5 leading-tight">
-                      CO₂ saved
-                    </span>
-                  </div>
+                    {totalCo2SavedKg > 0 && (
+                      <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col items-center text-center">
+                        <span className="font-headline-sm text-[17px] text-primary font-bold">
+                          {totalCo2SavedKg} kg
+                        </span>
+                        <span className="font-label-sm text-[10px] text-on-surface-variant mt-0.5 leading-tight">
+                          CO₂ saved
+                        </span>
+                      </div>
+                    )}
 
-                  <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col items-center text-center">
-                    <span className="font-headline-sm text-[17px] text-secondary font-bold">
-                      {approxCigarettesAvoided}
-                    </span>
-                    <span className="font-label-sm text-[10px] text-on-surface-variant mt-0.5 leading-tight">
-                      cigarettes avoided
-                    </span>
+                    {approxCigarettesAvoided !== null && approxCigarettesAvoided !== '0' && (
+                      <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col items-center text-center">
+                        <span className="font-headline-sm text-[17px] text-secondary font-bold">
+                          {approxCigarettesAvoided}
+                        </span>
+                        <span className="font-label-sm text-[10px] text-on-surface-variant mt-0.5 leading-tight">
+                          cigarettes avoided
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
                 {/* Progress Ring and Summary */}
                 <div className="flex items-center justify-between pt-2 border-t border-surface-container">
@@ -484,7 +497,7 @@ export const TodayPage: React.FC = () => {
           profile={profile}
           pm25AvoidedUg={totalPm25AvoidedUg}
           co2SavedKg={totalCo2SavedKg}
-          cigarettesAvoided={approxCigarettesAvoided}
+          cigarettesAvoided={approxCigarettesAvoided ?? '0'}
           completedActionsCount={completedCount}
           onClose={() => setShowShareModal(false)}
         />

@@ -62,5 +62,48 @@ describe('AQI & Ventilation Windows Tests (IMPACT_MODEL.md Section 5 & 7)', () =
     expect(getAqiBand(175).category).toBe('Unhealthy');
     expect(getAqiBand(248).category).toBe('Very Unhealthy');
     expect(getAqiBand(350).category).toBe('Hazardous');
+    expect(getAqiBand(null).shortLabel).toBe('Unknown');
+  });
+
+  it('window search over a series with null hours never picks them', () => {
+    // 24 hours: hours 13 and 14 have null PM2.5
+    // Hours 16 and 17 have clean PM2.5 (80 and 90 -> mean 85)
+    // Other hours are 250
+    const series: ForecastHour[] = [];
+    for (let h = 0; h < 24; h++) {
+      let pm: number | null = 250;
+      if (h === 13 || h === 14) pm = null; // Missing hours
+      else if (h === 16) pm = 80;
+      else if (h === 17) pm = 90;
+
+      series.push({
+        hour: h,
+        pm2_5: pm,
+      });
+    }
+
+    const result = findBestAndWorstWindows(series);
+    // Must NOT pick hours 13-14 (would be mean 0 if null converted to 0)
+    expect(result.bestWindow).not.toBeNull();
+    expect(result.bestWindow?.startHour).toBe(16);
+    expect(result.bestWindow?.endHour).toBe(18);
+    expect(result.bestWindow?.meanPm25).toBe(85);
+  });
+
+  it('returns null windows when no complete contiguous 2-hour window exists', () => {
+    // Every daytime hour alternates with null, so no contiguous 2 hours exist
+    const series: ForecastHour[] = [];
+    for (let h = 0; h < 24; h++) {
+      series.push({
+        hour: h,
+        pm2_5: h % 2 === 0 ? 100 : null,
+      });
+    }
+
+    const result = findBestAndWorstWindows(series);
+    expect(result.bestWindow).toBeNull();
+    expect(result.worstWindow).toBeNull();
+    expect(result.canVentilateToday).toBe(false);
+    expect(result.advisory).toBe('');
   });
 });

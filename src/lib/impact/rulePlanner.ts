@@ -1,6 +1,7 @@
 import { PlannedAction, Profile, HourlyForecastPoint } from '../../types';
 import { DayWindowsResult } from '../aqi';
 import { computeActionImpact, ActionImpactResult } from './actionImpact';
+import { makePm25Lookup } from './exposure';
 
 export interface EnrichedAction extends PlannedAction {
   impact: ActionImpactResult;
@@ -16,10 +17,7 @@ export function generateRuleBasedPlan(
   forecastPoints: HourlyForecastPoint[],
   windows: DayWindowsResult
 ): EnrichedAction[] {
-  const getHourlyPm25 = (hour: number) => {
-    const pt = forecastPoints.find((p) => p.hour === hour);
-    return pt ? pt.pm2_5 : 120;
-  };
+  const getHourlyPm25 = makePm25Lookup(forecastPoints);
 
   const childMember = profile.members.find((m) => m.ageGroup === 'child');
   const elderlyMember = profile.members.find((m) => m.ageGroup === 'elderly');
@@ -102,7 +100,7 @@ export function generateRuleBasedPlan(
       memberId: null,
       start: windows.bestWindow.startTime,
       end: windows.bestWindow.endTime,
-      title: `Open windows for 25 mins during clean window`,
+      title: 'Open windows during clean air window',
       reason: 'Flushes indoor carbon dioxide safely while outdoor PM2.5 is at daily low.',
       params: {
         worstStart: windows.worstWindow?.startTime || '08:00',
@@ -118,7 +116,7 @@ export function generateRuleBasedPlan(
       start: '13:00',
       end: '16:00',
       title: 'Keep windows sealed throughout the afternoon',
-      reason: 'Ambient air remains above 150 µg/m³; prioritize indoor recirculation.',
+      reason: 'Outdoor air remains heavily polluted; prioritize indoor air filtration.',
       params: {},
       completed: false,
     });

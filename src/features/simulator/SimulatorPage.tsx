@@ -10,7 +10,7 @@ type ScenarioActivity = 'commute' | 'exercise' | 'ventilation';
 
 export const SimulatorPage: React.FC = () => {
   const { profile } = useProfile();
-  const [currentPm25, setCurrentPm25] = useState<number>(145);
+  const [currentPm25, setCurrentPm25] = useState<number | null>(145);
 
   // Selectors State
   const [activity, setActivity] = useState<ScenarioActivity>('commute');
@@ -67,25 +67,40 @@ export const SimulatorPage: React.FC = () => {
       const co2Saved = calcTravelCo2SavedKg(baselineMode, alternativeMode, distanceKm);
       const avoidedUg = calcExposureAvoided(baselineInhaled, alternativeInhaled);
 
+      const hasPct = baselineInhaled !== null && alternativeInhaled !== null && baselineInhaled > 0;
+      const pct = hasPct ? Math.round(((baselineInhaled - alternativeInhaled) / baselineInhaled) * 100) : null;
+
+      let verdict = `Switching from solo car to Metro rail with an N95 mask`;
+      if (pct !== null && avoidedUg !== null) {
+        verdict += ` cuts ${selectedMember.name}'s inhaled particulate exposure by ~${pct}%`;
+      } else {
+        verdict += ` reduces ${selectedMember.name}'s inhaled particulate exposure`;
+      }
+      if (co2Saved !== null && co2Saved > 0) {
+        verdict += ` and prevents ${co2Saved} kg of tailpipe CO₂ emissions.`;
+      } else {
+        verdict += `.`;
+      }
+
       return {
         activityLabel: 'Work / School Commute',
         baseline: {
           title: 'Solo Petrol Car in Traffic',
           envLabel: 'Vehicle Cabin (Recirc Off)',
           maskLabel: 'No Mask',
-          inhaledUg: Math.round(baselineInhaled),
+          inhaledUg: baselineInhaled !== null ? Math.round(baselineInhaled) : null,
           co2Kg: Number(baselineCo2.toFixed(1)),
         },
         alternative: {
           title: 'Metro Rail + N95 Mask',
           envLabel: 'Air-Conditioned Metro Coach',
           maskLabel: 'N95 Respirator',
-          inhaledUg: Math.round(alternativeInhaled),
+          inhaledUg: alternativeInhaled !== null ? Math.round(alternativeInhaled) : null,
           co2Kg: Number(alternativeCo2.toFixed(1)),
         },
-        exposureAvoidedUg: avoidedUg || 48,
-        co2SavedKg: co2Saved || 2.5,
-        verdict: `Switching from solo car to Metro rail with an N95 mask cuts ${selectedMember.name}'s inhaled particulate exposure by ~${Math.round(((baselineInhaled - alternativeInhaled) / baselineInhaled) * 100)}% and prevents ${co2Saved || 2.5} kg of tailpipe CO₂ emissions.`,
+        exposureAvoidedUg: avoidedUg,
+        co2SavedKg: co2Saved,
+        verdict,
       };
     } else if (activity === 'exercise') {
       const baselineInhaled = calcInhaledUg(timeSlices, mockHourlyLookup, {
@@ -103,6 +118,15 @@ export const SimulatorPage: React.FC = () => {
       });
 
       const avoidedUg = calcExposureAvoided(baselineInhaled, alternativeInhaled);
+      const hasPct = baselineInhaled !== null && alternativeInhaled !== null && baselineInhaled > 0;
+      const pct = hasPct ? Math.round(((baselineInhaled - alternativeInhaled) / baselineInhaled) * 100) : null;
+
+      let verdict = `Shifting intense cardio indoors`;
+      if (pct !== null && avoidedUg !== null) {
+        verdict += ` cuts ${selectedMember.name}'s inhaled exposure by ~${pct}% during peak pollution hours, shielding sensitive respiratory airways.`;
+      } else {
+        verdict += ` reduces ${selectedMember.name}'s inhaled particulate exposure during peak pollution hours, shielding sensitive respiratory airways.`;
+      }
 
       return {
         activityLabel: 'Daily Workout & Exercise',
@@ -110,19 +134,19 @@ export const SimulatorPage: React.FC = () => {
           title: 'Roadside Outdoor Jog / Sports',
           envLabel: 'Ambient Roadside Air',
           maskLabel: 'Unmasked (Deep Breaths)',
-          inhaledUg: Math.round(baselineInhaled),
+          inhaledUg: baselineInhaled !== null ? Math.round(baselineInhaled) : null,
           co2Kg: null,
         },
         alternative: {
           title: 'Indoor Treadmill / Gym with HEPA Purifier',
           envLabel: 'Sealed Room with Purifier',
           maskLabel: 'Filtered Indoor Air',
-          inhaledUg: Math.round(alternativeInhaled),
+          inhaledUg: alternativeInhaled !== null ? Math.round(alternativeInhaled) : null,
           co2Kg: null,
         },
-        exposureAvoidedUg: avoidedUg || 180,
+        exposureAvoidedUg: avoidedUg,
         co2SavedKg: null,
-        verdict: `Shifting intense cardio indoors cuts ${selectedMember.name}'s inhaled exposure by over 80% during peak pollution hours, shielding sensitive respiratory airways.`,
+        verdict,
       };
     } else {
       // Ventilation
@@ -141,6 +165,15 @@ export const SimulatorPage: React.FC = () => {
       });
 
       const avoidedUg = calcExposureAvoided(baselineInhaled, alternativeInhaled);
+      const hasPct = baselineInhaled !== null && alternativeInhaled !== null && baselineInhaled > 0;
+      const pct = hasPct ? Math.round(((baselineInhaled - alternativeInhaled) / baselineInhaled) * 100) : null;
+
+      let verdict = `Keeping windows sealed and running indoor air filtration`;
+      if (pct !== null && avoidedUg !== null) {
+        verdict += ` cuts ${selectedMember.name}'s inhaled exposure by ~${pct}% compared to unventilated peak smog.`;
+      } else {
+        verdict += ` prevents acute particulate penetration while outdoor dispersion remains sluggish.`;
+      }
 
       return {
         activityLabel: 'Home Ventilation & Air Cleaning',
@@ -148,19 +181,19 @@ export const SimulatorPage: React.FC = () => {
           title: 'Open Windows during Inversion Peak',
           envLabel: 'Outdoor Smog Infiltration',
           maskLabel: 'Unfiltered Room',
-          inhaledUg: Math.round(baselineInhaled),
+          inhaledUg: baselineInhaled !== null ? Math.round(baselineInhaled) : null,
           co2Kg: null,
         },
         alternative: {
           title: 'Sealed Room + Active Purifier Recirculation',
           envLabel: 'HEPA Purified Sanctuary',
           maskLabel: 'Closed & Filtered',
-          inhaledUg: Math.round(alternativeInhaled),
+          inhaledUg: alternativeInhaled !== null ? Math.round(alternativeInhaled) : null,
           co2Kg: null,
         },
-        exposureAvoidedUg: avoidedUg || 65,
+        exposureAvoidedUg: avoidedUg,
         co2SavedKg: null,
-        verdict: `Keeping windows sealed and running indoor air filtration prevents acute particulate penetration while outdoor dispersion remains sluggish.`,
+        verdict,
       };
     }
   }, [activity, timeSlot, ageGroup, currentPm25, profile.commute, selectedMember.name]);
@@ -301,7 +334,7 @@ export const SimulatorPage: React.FC = () => {
                   Inhaled PM2.5 Exposure
                 </span>
                 <span className="font-headline-sm text-headline-sm text-error font-bold">
-                  {simulationResults.baseline.inhaledUg} µg
+                  {simulationResults.baseline.inhaledUg !== null ? `${simulationResults.baseline.inhaledUg} µg` : ''}
                 </span>
               </div>
               <div className="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
@@ -369,21 +402,16 @@ export const SimulatorPage: React.FC = () => {
                   Inhaled PM2.5 Exposure
                 </span>
                 <span className="font-headline-sm text-headline-sm text-primary font-bold">
-                  {simulationResults.alternative.inhaledUg} µg
+                  {simulationResults.alternative.inhaledUg !== null ? `${simulationResults.alternative.inhaledUg} µg` : ''}
                 </span>
               </div>
               <div className="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
                 <div
                   className="bg-primary h-full rounded-full transition-all"
                   style={{
-                    width: `${Math.max(
-                      15,
-                      Math.round(
-                        (simulationResults.alternative.inhaledUg /
-                          (simulationResults.baseline.inhaledUg || 1)) *
-                          100
-                      )
-                    )}%`,
+                    width: simulationResults.alternative.inhaledUg !== null && simulationResults.baseline.inhaledUg !== null && simulationResults.baseline.inhaledUg > 0
+                      ? `${Math.max(15, Math.min(100, Math.round((simulationResults.alternative.inhaledUg / simulationResults.baseline.inhaledUg) * 100)))}%`
+                      : '0%',
                   }}
                 ></div>
               </div>

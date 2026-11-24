@@ -1,5 +1,8 @@
 import { CIGARETTE_HOURS_DENOMINATOR } from './constants';
 import { ExposureSlice } from './exposure';
+import { EffectiveSlice } from '../../types';
+
+export type { EffectiveSlice };
 
 export interface EffectiveConcentrationParams {
   fEnv: number;
@@ -7,36 +10,96 @@ export interface EffectiveConcentrationParams {
 }
 
 /**
+ * Calculates cigarette equivalents avoided for an action given its baseline and alternative slices.
+ * Formula per IMPACT_MODEL.md section 2:
+ * cigarettes = (Σ baseline C_out·F_env·F_mask·Δt − Σ alternative C_out·F_env·F_mask·Δt) / (22 × 24)
+ * Returns null if any required hour in baseline or alternative slices has null PM2.5.
+ * Treats a result <= 0 as 0.
+ */
+export function calcActionCigarettesAvoided(
+  baselineSlices: EffectiveSlice[],
+  alternativeSlices: EffectiveSlice[],
+  getHourlyPm25: (hour: number) => number | null
+): number | null {
+  if (baselineSlices.length === 0 && alternativeSlices.length === 0) return 0;
+
+  let sumBaseline = 0;
+  for (const s of baselineSlices) {
+    const cOut = getHourlyPm25(s.hour);
+    if (cOut === null || isNaN(cOut)) return null;
+    sumBaseline += cOut * s.fEnv * s.fMask * s.fraction;
+  }
+
+  let sumAlt = 0;
+  for (const s of alternativeSlices) {
+    const cOut = getHourlyPm25(s.hour);
+    if (cOut === null || isNaN(cOut)) return null;
+    sumAlt += cOut * s.fEnv * s.fMask * s.fraction;
+  }
+
+  const delta = sumBaseline - sumAlt;
+  if (delta <= 0) return 0;
+  return delta / CIGARETTE_HOURS_DENOMINATOR;
+}
+
+/**
  * Calculates cigarette equivalents avoided based on Berkeley Earth rule:
  * breathing air at 22 µg/m³ PM2.5 for 24 hours ≈ 1 cigarette (528 µg·h/m³).
- *
- * Formula:
- * cigarettes_avoided = Σ over hours ( (C_eff_baseline[h] - C_eff_alternative[h]) × fraction_of_hour ) / (22 × 24)
- * where C_eff = C_outdoor × F_env × F_mask
- *
- * Used only for daily and weekly totals, formatted with "~".
  */
 export function calcCigarettesAvoided(
   slices: ExposureSlice[],
-  getHourlyPm25: (hour: number) => number,
+  getHourlyPm25: (hour: number) => number | null,
   baseline: EffectiveConcentrationParams,
   alternative: EffectiveConcentrationParams
-): number {
-  if (slices.length === 0) return 0;
+): number | null {
+  const baseSlices: EffectiveSlice[] = slices.map((s) => ({
+    hour: s.hour,
+    fraction: s.fraction,
+    fEnv: baseline.fEnv,
+    fMask: baseline.fMask,
+  }));
+  const altSlices: EffectiveSlice[] = slices.map((s) => ({
+    hour: s.hour,
+    fraction: s.fraction,
+    fEnv: alternative.fEnv,
+    fMask: alternative.fMask,
+  }));
+  return calcActionCigarettesAvoided(baseSlices, altSlices, getHourlyPm25);
+}
 
-  let totalEffectiveDeltaUgHours = 0;
-  for (const slice of slices) {
-    const cOutdoor = getHourlyPm25(slice.hour) || 0;
-    const cEffBaseline = cOutdoor * baseline.fEnv * baseline.fMask;
-    const cEffAlt = cOutdoor * alternative.fEnv * alternative.fMask;
-    const delta = cEffBaseline - cEffAlt;
-    if (delta > 0) {
-      totalEffectiveDeltaUgHours += delta * slice.fraction;
+export interface ActionWithReceipt {
+  impact: {
+    exposureAvoidedUg: number | null;
+    co2SavedKg: number | null;
+    baselineSlices?: EffectiveSlice[];
+    alternativeSlices?: EffectiveSlice[];
+  };
+}
+
+/**
+ * Calculates total cigarette equivalents avoided across qualifying actions.
+ * Only includes actions that have a non-null exposureAvoidedUg.
+ * If an action's hours are missing, it drops out of the sum.
+ */
+export function calcTotalCigarettesAvoided(
+  actions: ActionWithReceipt[],
+  getHourlyPm25: (hour: number) => number | null
+): number {
+  let totalCigs = 0;
+  for (const act of actions) {
+    if (act.impact.exposureAvoidedUg === null) continue;
+    if (!act.impact.baselineSlices || !act.impact.alternativeSlices) continue;
+
+    const actionCigs = calcActionCigarettesAvoided(
+      act.impact.baselineSlices,
+      act.impact.alternativeSlices,
+      getHourlyPm25
+    );
+    if (actionCigs !== null && actionCigs > 0) {
+      totalCigs += actionCigs;
     }
   }
-
-  const cigs = totalEffectiveDeltaUgHours / CIGARETTE_HOURS_DENOMINATOR;
-  return cigs;
+  return totalCigs;
 }
 
 /**

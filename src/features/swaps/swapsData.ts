@@ -11,8 +11,8 @@ export interface HabitSwap {
   icon: string;
   fromHabit: string;
   toHabit: string;
-  getImpact: (profile: Profile, currentPm25: number) => {
-    exposureAvoidedUg: number;
+  getImpact: (profile: Profile, currentPm25: number | null) => {
+    exposureAvoidedUg: number | null;
     co2SavedKg: number | null;
     specialBenefit?: string;
   };
@@ -31,9 +31,9 @@ export const HABIT_SWAPS: HabitSwap[] = [
       const distance = profile.commute.distanceKm || 18;
       const co2 = calcTravelCo2SavedKg(profile.commute.mode, 'metro', distance) || 2.5;
       // Inhaled difference: (1.0 vs 0.5) * 1h * 0.7 IR * currentPm25
-      const ug = Math.round(0.5 * 0.7 * currentPm25);
+      const ug = currentPm25 !== null ? Math.round(0.5 * 0.7 * currentPm25) : null;
       return {
-        exposureAvoidedUg: Math.max(35, ug),
+        exposureAvoidedUg: ug !== null ? Math.max(35, ug) : null,
         co2SavedKg: co2,
       };
     },
@@ -94,9 +94,9 @@ export const HABIT_SWAPS: HabitSwap[] = [
     toHabit: 'Shared electric school shuttle or Metro coach with N95 mask',
     getImpact: (_profile, currentPm25) => {
       const co2 = calcTravelCo2SavedKg('auto_cng', 'metro', 8) || 0.8;
-      const ug = Math.round(0.7 * 0.7 * currentPm25);
+      const ug = currentPm25 !== null ? Math.round(0.7 * 0.7 * currentPm25) : null;
       return {
-        exposureAvoidedUg: Math.max(45, ug),
+        exposureAvoidedUg: ug !== null ? Math.max(45, ug) : null,
         co2SavedKg: co2,
       };
     },
@@ -111,9 +111,9 @@ export const HABIT_SWAPS: HabitSwap[] = [
     toHabit: 'Purified indoor treadmill workout or afternoon gym session at 2:00 PM',
     getImpact: (_profile, currentPm25) => {
       // Vigorous running IR = 3.0 m3/h. Difference: (1.0 - 0.2) * 1h * 3.0 * currentPm25
-      const ug = Math.round(0.8 * 3.0 * currentPm25);
+      const ug = currentPm25 !== null ? Math.round(0.8 * 3.0 * currentPm25) : null;
       return {
-        exposureAvoidedUg: Math.max(60, ug),
+        exposureAvoidedUg: ug !== null ? Math.max(60, ug) : null,
         co2SavedKg: null, // Zero CO2 saved for running -> hide CO2 tile
       };
     },

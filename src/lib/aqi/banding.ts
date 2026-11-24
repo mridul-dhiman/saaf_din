@@ -97,7 +97,21 @@ export const AQI_BANDS: AqiBandInfo[] = [
 /**
  * Returns AQI band information based on US AQI value.
  */
-export function getAqiBand(usAqi: number): AqiBandInfo {
+export function getAqiBand(usAqi: number | null): AqiBandInfo {
+  if (usAqi === null || isNaN(usAqi)) {
+    return {
+      category: 'Moderate',
+      shortLabel: 'Unknown',
+      minAqi: 0,
+      maxAqi: 0,
+      colorClass: 'text-outline',
+      bgClass: 'bg-outline',
+      badgeBgClass: 'bg-surface-container',
+      badgeTextClass: 'text-on-surface-variant',
+      borderClass: 'border-surface-container',
+      healthDescription: 'Forecast data unavailable.',
+    };
+  }
   const rounded = Math.round(usAqi);
   for (const band of AQI_BANDS) {
     if (rounded >= band.minAqi && rounded <= band.maxAqi) {
@@ -110,7 +124,8 @@ export function getAqiBand(usAqi: number): AqiBandInfo {
 /**
  * Maps raw PM2.5 (µg/m³) to a band color class for hourly strips.
  */
-export function getPm25ColorClass(pm25: number): string {
+export function getPm25ColorClass(pm25: number | null): string {
+  if (pm25 === null || isNaN(pm25)) return 'bg-surface-container-high';
   if (pm25 <= 12.0) return 'bg-emerald-500';
   if (pm25 <= 35.4) return 'bg-amber-500';
   if (pm25 <= 55.4) return 'bg-orange-500';

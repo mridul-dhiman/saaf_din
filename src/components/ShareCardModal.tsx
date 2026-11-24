@@ -20,7 +20,7 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
-  const shareText = `🌿 Today my household in ${profile.location.name} avoided ${pm25AvoidedUg} µg of PM2.5 and saved ${co2SavedKg} kg of CO2 (~${cigarettesAvoided} cigarettes avoided) by following optimized clean routines on SaafDin! Check your exposure: https://saaf-din.web.app`;
+  const shareText = `🌿 Today my household in ${profile.location.name} avoided ${pm25AvoidedUg} µg of PM2.5 and saved ${co2SavedKg} kg of CO2 (${cigarettesAvoided} cigarettes avoided) by following optimized clean routines on SaafDin! Check your exposure: https://saaf-din.web.app`;
 
   const handleCopyOrShare = async () => {
     if (navigator.share) {
@@ -75,7 +75,7 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
                 SaafDin
               </span>
               <span className="font-label-sm text-[10px] text-primary-fixed uppercase tracking-wider font-semibold">
-                Clean Air Impact Dividend
+                Today's clean air impact
               </span>
             </div>
             <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-primary-fixed font-label-sm text-[11px] font-bold">

@@ -67,14 +67,33 @@ export interface ActivityContext {
 }
 
 /**
+ * Creates an hourly PM2.5 lookup function from forecast points.
+ * Returns null if the requested hour has null/missing PM2.5 or is not found in points.
+ * Built from the points array so Phase 4 can switch to timestamp keys without touching callers.
+ */
+export function makePm25Lookup(
+  points: { hour: number; pm2_5: number | null; time?: string }[]
+): (hour: number) => number | null {
+  const map = new Map<number, number | null>();
+  for (const pt of points) {
+    map.set(pt.hour, pt.pm2_5 !== undefined ? pt.pm2_5 : null);
+  }
+  return (hour: number) => {
+    const val = map.get(hour);
+    return val !== undefined ? val : null;
+  };
+}
+
+/**
  * Calculates inhaled PM2.5 (in micrograms, µg) for a specified period and activity context.
  * Formula: Σ over hours ( C_outdoor[h] × F_env × F_mask × IR × fraction_of_hour )
+ * Returns null if any required hour in the slices has missing (null) concentration.
  */
 export function calcInhaledUg(
   slices: ExposureSlice[],
-  getHourlyPm25: (hour: number) => number,
+  getHourlyPm25: (hour: number) => number | null,
   context: ActivityContext
-): number {
+): number | null {
   if (slices.length === 0) return 0;
 
   const ir = INHALATION_RATES[context.intensity]?.[context.ageGroup] ?? 0.7;
@@ -83,7 +102,10 @@ export function calcInhaledUg(
 
   let totalInhaled = 0;
   for (const slice of slices) {
-    const cOutdoor = getHourlyPm25(slice.hour) || 0;
+    const cOutdoor = getHourlyPm25(slice.hour);
+    if (cOutdoor === null || isNaN(cOutdoor)) {
+      return null;
+    }
     totalInhaled += cOutdoor * fEnv * fMask * ir * slice.fraction;
   }
 
@@ -92,13 +114,16 @@ export function calcInhaledUg(
 
 /**
  * Calculates PM2.5 exposure avoided between baseline and alternative scenarios.
- * Returns null if avoided exposure is <= 0 or < 1 µg (as per IMPACT_MODEL.md).
+ * Returns null if either baseline or alternative is null, or avoided exposure is <= 0 or < 1 µg.
  * Rounds to whole µg.
  */
 export function calcExposureAvoided(
-  baselineInhaled: number,
-  alternativeInhaled: number
+  baselineInhaled: number | null,
+  alternativeInhaled: number | null
 ): number | null {
+  if (baselineInhaled === null || alternativeInhaled === null) {
+    return null;
+  }
   const avoided = baselineInhaled - alternativeInhaled;
   // If baseline and alternative are identical or avoided is under 1 µg, show no pill
   if (avoided < 1.0) {

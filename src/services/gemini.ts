@@ -3,7 +3,7 @@ import { app } from './firebase';
 import { Profile, HourlyForecastPoint, PlannedAction, ActionType } from '../types';
 import { DayWindowsResult } from '../lib/aqi';
 import { generateRuleBasedPlan, EnrichedAction } from '../lib/impact/rulePlanner';
-import { computeActionImpact } from '../lib/impact';
+import { computeActionImpact, makePm25Lookup } from '../lib/impact';
 
 const ALLOWED_ACTION_TYPES: ActionType[] = [
   'ventilate',
@@ -90,10 +90,7 @@ export async function generateGeminiPlan(
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       const parsed = JSON.parse(cached) as PlannedAction[];
-      const getHourlyPm25 = (hour: number) => {
-        const pt = forecastPoints.find((p) => p.hour === hour);
-        return pt ? pt.pm2_5 : 120;
-      };
+      const getHourlyPm25 = makePm25Lookup(forecastPoints);
       return parsed.map((act) => ({
         ...act,
         impact: computeActionImpact(act, profile, getHourlyPm25),
@@ -174,10 +171,7 @@ HARD RULES:
           console.warn('Failed to cache gemini plan:', e);
         }
 
-        const getHourlyPm25 = (hour: number) => {
-          const pt = forecastPoints.find((p) => p.hour === hour);
-          return pt ? pt.pm2_5 : 120;
-        };
+        const getHourlyPm25 = makePm25Lookup(forecastPoints);
 
         return validatedActions.map((act) => ({
           ...act,

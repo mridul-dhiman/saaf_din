@@ -11,7 +11,8 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   // Maximum PM2.5 in the dataset to scale bar heights smoothly (min max is at least 150)
-  const maxPm25 = Math.max(150, ...points.map((p) => p.pm2_5));
+  const validPm25s = points.map((p) => p.pm2_5).filter((v): v is number => v !== null);
+  const maxPm25 = Math.max(150, ...(validPm25s.length > 0 ? validPm25s : [150]));
 
   const formatHourLabel = (h: number) => {
     if (h === 0) return '12 AM';
@@ -85,7 +86,7 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
                 Worst Window: {windows.worstWindow.startTime} – {windows.worstWindow.endTime}
               </span>
               <span className="font-body-sm text-body-sm text-on-surface">
-                Peak ~{windows.worstWindow.meanPm25} µg/m³ · Keep windows tightly sealed
+                Average ~{windows.worstWindow.meanPm25} µg/m³ · Keep windows tightly sealed
               </span>
             </div>
           </div>
@@ -123,7 +124,7 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
               </span>
               <span className="font-body-sm text-body-sm text-on-surface">
                 {windows.canVentilateToday
-                  ? `Average ~${windows.bestWindow.meanPm25} µg/m³ · Safe for 20-30 min airflow`
+                  ? `Average ~${windows.bestWindow.meanPm25} µg/m³`
                   : `Lowest average is ${windows.bestWindow.meanPm25} µg/m³ (> 150 µg/m³ threshold)`}
               </span>
             </div>
@@ -137,7 +138,14 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
         <div className="h-6 flex items-center justify-end text-label-sm text-on-surface-variant mb-1">
           {hoveredIdx !== null && points[hoveredIdx] ? (
             <span className="font-semibold text-on-surface bg-surface-container px-2 py-0.5 rounded-md">
-              {formatHourLabel(points[hoveredIdx].hour)}: {points[hoveredIdx].pm2_5} µg/m³ PM2.5 · US AQI {points[hoveredIdx].us_aqi}
+              {formatHourLabel(points[hoveredIdx].hour)}:{' '}
+              {points[hoveredIdx].pm2_5 !== null
+                ? `${points[hoveredIdx].pm2_5} µg/m³ PM2.5`
+                : 'No PM2.5 data'}{' '}
+              ·{' '}
+              {points[hoveredIdx].us_aqi !== null
+                ? `US AQI ${points[hoveredIdx].us_aqi}`
+                : 'No AQI data'}
             </span>
           ) : (
             <span className="text-[11px] text-outline">Hover or tap any bar for hourly details</span>
@@ -150,8 +158,13 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
             {points.slice(0, 24).map((p, idx) => {
               const isBest = isInBestWindow(p.hour);
               const isWorst = isInWorstWindow(p.hour);
-              const barHeightPercent = Math.max(12, Math.round((p.pm2_5 / maxPm25) * 100));
-              const colorClass = getPm25ColorClass(p.pm2_5);
+              const isNull = p.pm2_5 === null;
+              const barHeightPercent = isNull
+                ? 6
+                : Math.max(12, Math.round(((p.pm2_5 as number) / maxPm25) * 100));
+              const colorClass = isNull
+                ? 'bg-surface-container-high border border-dashed border-outline/40'
+                : getPm25ColorClass(p.pm2_5);
 
               return (
                 <div

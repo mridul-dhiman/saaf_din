@@ -3,10 +3,35 @@ import {
   calcInhaledUg,
   calcExposureAvoided,
   getTimeSlices,
+  makePm25Lookup,
 } from '../exposure';
 import { calcTravelCo2Kg, calcTravelCo2SavedKg } from '../emissions';
-import { calcCigarettesAvoided, formatCigarettes } from '../cigarettes';
+import {
+  calcCigarettesAvoided,
+  calcActionCigarettesAvoided,
+  calcTotalCigarettesAvoided,
+  formatCigarettes,
+} from '../cigarettes';
 import { MASK_FACTORS, EMISSION_FACTORS } from '../constants';
+import { computeActionImpact } from '../actionImpact';
+import { Profile, PlannedAction } from '../../../types';
+
+const MOCK_PROFILE: Profile = {
+  location: { name: 'Delhi', lat: 28.61, lon: 77.23 },
+  members: [
+    { id: 'm1', name: 'Arjun', ageGroup: 'adult', sensitivities: [] },
+  ],
+  commute: {
+    mode: 'car_petrol',
+    distanceKm: 18,
+    departs: '08:30',
+    returns: '18:00',
+  },
+  cookingFuel: 'png',
+  hasExhaust: true,
+  hasPurifier: true,
+  language: 'en',
+};
 
 describe('Impact Model Unit Tests (IMPACT_MODEL.md Section 7)', () => {
   // Test 1: Zero duration returns zero
@@ -54,10 +79,12 @@ describe('Impact Model Unit Tests (IMPACT_MODEL.md Section 7)', () => {
       mask: 'n95',
     });
 
-    expect(unmasked).toBeGreaterThan(0);
+    expect(unmasked).not.toBeNull();
+    expect(unmasked!).toBeGreaterThan(0);
     // N95 factor is 0.3
     expect(MASK_FACTORS.n95).toBe(0.3);
-    expect(maskedN95).toBeCloseTo(unmasked * 0.3, 5);
+    expect(maskedN95).not.toBeNull();
+    expect(maskedN95!).toBeCloseTo(unmasked! * 0.3, 5);
   });
 
   // Test 4: A period crossing an hour boundary weights each hour's concentration by the fraction spent in it
@@ -130,7 +157,182 @@ describe('Impact Model Unit Tests (IMPACT_MODEL.md Section 7)', () => {
       { fEnv: 0.0, fMask: 1.0 }
     );
 
-    expect(cigs).toBeCloseTo(1.0, 5);
-    expect(formatCigarettes(cigs)).toBe('~1');
+    expect(cigs).not.toBeNull();
+    expect(cigs!).toBeCloseTo(1.0, 5);
+    expect(formatCigarettes(cigs!)).toBe('~1');
+  });
+
+  // Test 8: Missing forecast hour gives a null receipt
+  it('8. Missing forecast hour gives a null receipt', () => {
+    const points = [
+      { hour: 7, pm2_5: 100 },
+      { hour: 8, pm2_5: null }, // Missing hour!
+      { hour: 9, pm2_5: 80 },
+    ];
+    const lookup = makePm25Lookup(points);
+
+    // Slice crossing into hour 8
+    const slices = getTimeSlices('07:30', '08:30');
+    const inhaled = calcInhaledUg(slices, lookup, {
+      ageGroup: 'adult',
+      intensity: 'light',
+      env: 'outdoors',
+    });
+    // Must be null because hour 8 is null
+    expect(inhaled).toBeNull();
+
+    const exposureAvoided = calcExposureAvoided(inhaled, 50);
+    expect(exposureAvoided).toBeNull();
+
+    const action: PlannedAction = {
+      id: 'act_test_missing_hour',
+      type: 'wear_mask',
+      memberId: 'm1',
+      start: '07:30',
+      end: '08:30',
+      title: 'Wear N95 Mask',
+      reason: 'Protection during commute',
+      params: { mask: 'n95' },
+    };
+
+    const impact = computeActionImpact(action, MOCK_PROFILE, lookup);
+    expect(impact.exposureAvoidedUg).toBeNull();
+  });
+
+  // Test 9: Cigarette totals over two ticked actions equal the mathematical formula result
+  it('9. Cigarette totals over two ticked actions equal the mathematical formula result', () => {
+    // Action 1: keep_closed for 2 hours (10:00 to 12:00)
+    // PM2.5 = 100 µg/m³. Baseline F_env = 0.9, Alt F_env = 0.5. Delta = 100 * (0.9 - 0.5) = 40 µg/m³.
+    // Duration = 2 hours -> 40 * 2 = 80 µg·h/m³
+    // Action 2: wear_mask for 1 hour (08:00 to 09:00)
+    // PM2.5 = 200 µg/m³. Baseline F_mask = 1.0, Alt F_mask = 0.3. Delta = 200 * (1.0 - 0.3) = 140 µg/m³.
+    // Duration = 1 hour -> 140 * 1 = 140 µg·h/m³
+    // Total delta = 80 + 140 = 220 µg·h/m³
+    // Denominator = 22 * 24 = 528
+    // Expected cigarettes = 220 / 528 ≈ 0.41666...
+    const lookup = (h: number) => (h === 8 ? 200 : 100);
+
+    const action1: PlannedAction = {
+      id: 'act1',
+      type: 'keep_closed',
+      memberId: null,
+      start: '10:00',
+      end: '12:00',
+      title: 'Keep windows closed',
+      reason: 'Prevents infiltration',
+      params: {},
+    };
+
+    const action2: PlannedAction = {
+      id: 'act2',
+      type: 'wear_mask',
+      memberId: 'm1',
+      start: '08:00',
+      end: '09:00',
+      title: 'Wear N95 mask',
+      reason: 'Filters vehicles exhaust',
+      params: { mask: 'n95' },
+    };
+
+    const impact1 = computeActionImpact(action1, MOCK_PROFILE, lookup);
+    const impact2 = computeActionImpact(action2, MOCK_PROFILE, lookup);
+
+    const totalCigs = calcTotalCigarettesAvoided(
+      [{ impact: impact1 }, { impact: impact2 }],
+      lookup
+    );
+
+    const expectedCigs = (80 + 140) / (22 * 24);
+    expect(totalCigs).toBeCloseTo(expectedCigs, 5);
+    expect(formatCigarettes(totalCigs)).toBe('< 1');
+  });
+
+  // Test 10: A shift action's cigarette value uses its own baseline and alternative slices
+  it('10. A shift action cigarette value uses its own baseline and alternative slices', () => {
+    // Action: shift outdoor activity from 07:00-08:00 (peak PM2.5 = 300) to 14:00-15:00 (cleaner PM2.5 = 60)
+    // Baseline slices: hour 7, PM2.5 = 300, F_env = 1.0, F_mask = 1.0 -> 300 * 1 = 300
+    // Alternative slices: hour 14, PM2.5 = 60, F_env = 1.0, F_mask = 1.0 -> 60 * 1 = 60
+    // Delta = 300 - 60 = 240 µg·h/m³
+    // Expected cigarettes = 240 / 528 ≈ 0.4545...
+    const lookup = (h: number) => (h === 7 ? 300 : h === 14 ? 60 : 150);
+
+    const shiftAction: PlannedAction = {
+      id: 'act_shift',
+      type: 'shift_outdoor_activity',
+      memberId: 'm1',
+      start: '14:00',
+      end: '15:00',
+      title: 'Shift workout to afternoon',
+      reason: 'Avoid morning peak inversion',
+      params: { originalStart: '07:00', originalEnd: '08:00', intensity: 'moderate' },
+    };
+
+    const impact = computeActionImpact(shiftAction, MOCK_PROFILE, lookup);
+    expect(impact.baselineSlices).toBeDefined();
+    expect(impact.alternativeSlices).toBeDefined();
+    expect(impact.baselineSlices?.[0].hour).toBe(7);
+    expect(impact.alternativeSlices?.[0].hour).toBe(14);
+
+    const cigs = calcActionCigarettesAvoided(
+      impact.baselineSlices!,
+      impact.alternativeSlices!,
+      lookup
+    );
+    expect(cigs).not.toBeNull();
+    expect(cigs!).toBeCloseTo(240 / (22 * 24), 5);
+  });
+
+  // Test 11: Totals exclude null-receipt actions
+  it('11. Totals exclude null-receipt actions', () => {
+    const points = [
+      { hour: 7, pm2_5: 200 },
+      { hour: 8, pm2_5: null }, // hour 8 missing
+      { hour: 10, pm2_5: 100 },
+      { hour: 11, pm2_5: 100 },
+    ];
+    const lookup = makePm25Lookup(points);
+
+    // Action 1: Valid receipt (10:00 to 12:00)
+    const validAction: PlannedAction = {
+      id: 'act_valid',
+      type: 'keep_closed',
+      memberId: null,
+      start: '10:00',
+      end: '12:00',
+      title: 'Keep windows closed',
+      reason: 'Prevents infiltration',
+      params: {},
+    };
+
+    // Action 2: Missing hour 8 (07:30 to 08:30) -> receipt is null
+    const invalidAction: PlannedAction = {
+      id: 'act_invalid',
+      type: 'wear_mask',
+      memberId: 'm1',
+      start: '07:30',
+      end: '08:30',
+      title: 'Wear N95 mask',
+      reason: 'Commute protection',
+      params: { mask: 'n95' },
+    };
+
+    const impactValid = computeActionImpact(validAction, MOCK_PROFILE, lookup);
+    const impactInvalid = computeActionImpact(invalidAction, MOCK_PROFILE, lookup);
+
+    expect(impactValid.exposureAvoidedUg).not.toBeNull();
+    expect(impactInvalid.exposureAvoidedUg).toBeNull(); // Missing hour drops out
+
+    // calcTotalCigarettesAvoided should only count the valid action
+    const totalCigs = calcTotalCigarettesAvoided(
+      [{ impact: impactValid }, { impact: impactInvalid }],
+      lookup
+    );
+
+    const singleActionCigs = calcActionCigarettesAvoided(
+      impactValid.baselineSlices!,
+      impactValid.alternativeSlices!,
+      lookup
+    );
+    expect(totalCigs).toBeCloseTo(singleActionCigs!, 5);
   });
 });

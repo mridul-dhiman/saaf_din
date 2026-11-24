@@ -5,7 +5,7 @@ import { HourlyForecast, ActionType } from '../../types';
 import { findBestAndWorstWindows } from '../../lib/aqi';
 import { getAI, getGenerativeModel, GoogleAIBackend } from 'firebase/ai';
 import { app } from '../../services/firebase';
-import { computeActionImpact, ActionImpactResult } from '../../lib/impact';
+import { computeActionImpact, ActionImpactResult, makePm25Lookup } from '../../lib/impact';
 
 interface ChatMessage {
   id: string;
@@ -128,10 +128,7 @@ Output JSON format:
 
       let actionWithImpact = undefined;
       if (parsed.recommendedAction && parsed.recommendedAction.type) {
-        const getHourlyPm25 = (hour: number) => {
-          const pt = forecast?.points.find((p) => p.hour === hour);
-          return pt ? pt.pm2_5 : 120;
-        };
+        const getHourlyPm25 = forecast ? makePm25Lookup(forecast.points) : () => null;
 
         const impact = computeActionImpact(
           {
@@ -171,15 +168,19 @@ Output JSON format:
       console.warn('Gemini chat error, falling back to rule-based response:', err);
 
       // Intelligent deterministic fallback response
-      let fallbackText = `Today in ${profile.location.name}, current US AQI is around ${forecast?.points[0]?.us_aqi || 220}. `;
+      const currentAqi = forecast?.points[0]?.us_aqi;
+      let fallbackText = currentAqi != null
+        ? `Today in ${profile.location.name}, current US AQI is around ${currentAqi}. `
+        : `Today in ${profile.location.name}. `;
+
       if (textToSend.toLowerCase().includes('ventilate') || textToSend.toLowerCase().includes('window')) {
-        fallbackText += windowsResult.canVentilateToday
-          ? `The safest ventilation window is between ${windowsResult.bestWindow?.startTime} and ${windowsResult.bestWindow?.endTime}.`
-          : `Air quality remains above 150 µg/m³ all day, so it is safer to keep windows sealed.`;
+        fallbackText += windowsResult.canVentilateToday && windowsResult.bestWindow
+          ? `The safest ventilation window is between ${windowsResult.bestWindow.startTime} and ${windowsResult.bestWindow.endTime}.`
+          : `Outdoor air quality remains heavily polluted, so it is safer to keep windows sealed.`;
       } else if (textToSend.toLowerCase().includes('mask')) {
-        fallbackText += `Wearing an N95 respirator reduces inhaled particulate exposure by approximately 70% during outdoor transit.`;
+        fallbackText += `Wearing an N95 respirator significantly reduces inhaled particulate exposure during outdoor transit.`;
       } else if (textToSend.toLowerCase().includes('metro') || textToSend.toLowerCase().includes('commute')) {
-        fallbackText += `Switching from solo driving to Metro rail saves approximately 2.5 kg of direct CO₂ per trip and substantially cuts cabin exposure.`;
+        fallbackText += `Switching from solo driving to Metro rail avoids tailpipe emissions and reduces in-cabin particulate exposure.`;
       } else {
         fallbackText += `I recommend prioritizing indoor air filtration and shifting outdoor exercise away from morning peak traffic.`;
       }

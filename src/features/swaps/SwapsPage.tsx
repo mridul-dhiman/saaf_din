@@ -4,10 +4,11 @@ import { currentForecastProvider } from '../../services/forecast';
 import { HABIT_SWAPS, HabitSwap, SwapCategory } from './swapsData';
 import { ReceiptModal } from '../../components/ReceiptModal';
 import { EnrichedAction } from '../../lib/impact/rulePlanner';
+import { formatCigarettes } from '../../lib/impact';
 
 export const SwapsPage: React.FC = () => {
   const { profile } = useProfile();
-  const [currentPm25, setCurrentPm25] = useState<number>(140);
+  const [currentPm25, setCurrentPm25] = useState<number | null>(140);
   const [activeCategory, setActiveCategory] = useState<SwapCategory>('all');
   const [adoptedSwapIds, setAdoptedSwapIds] = useState<string[]>(() => {
     try {
@@ -47,7 +48,7 @@ export const SwapsPage: React.FC = () => {
     return HABIT_SWAPS.filter((swap) => {
       const impact = swap.getImpact(profile, currentPm25);
       if (activeCategory === 'all') return true;
-      if (activeCategory === 'high-impact') return impact.exposureAvoidedUg >= 50;
+      if (activeCategory === 'high-impact') return impact.exposureAvoidedUg !== null && impact.exposureAvoidedUg >= 50;
       return swap.category === activeCategory;
     });
   }, [activeCategory, profile, currentPm25]);
@@ -56,24 +57,32 @@ export const SwapsPage: React.FC = () => {
   const weeklyImpact = useMemo(() => {
     let totalUg = 0;
     let totalCo2 = 0;
+    let qualifyingCount = 0;
 
     for (const swap of HABIT_SWAPS) {
       if (adoptedSwapIds.includes(swap.id)) {
         const impact = swap.getImpact(profile, currentPm25);
-        // Weekly scaling (approx 5 weekdays for commute/cooking)
-        totalUg += impact.exposureAvoidedUg * 5;
-        if (impact.co2SavedKg) {
+        if (impact.exposureAvoidedUg !== null && impact.exposureAvoidedUg > 0) {
+          totalUg += impact.exposureAvoidedUg * 5;
+          qualifyingCount++;
+        }
+        if (impact.co2SavedKg && impact.co2SavedKg > 0) {
           totalCo2 += impact.co2SavedKg * 5;
         }
       }
     }
 
-    const approxCigs = Math.round(totalUg / 100);
+    // Cigarettes avoided per Berkeley Earth formula: (Delta C_eff * hours) / (22 * 24)
+    // IR for adult light transit is 0.7 m³/h: Delta C_eff * hours = totalUg / 0.7
+    const deltaEffectiveUgHours = totalUg / 0.7;
+    const cigs = deltaEffectiveUgHours / 528;
+    const formattedCigs = formatCigarettes(cigs);
 
     return {
+      qualifyingCount,
       totalUg,
       totalCo2: Number(totalCo2.toFixed(1)),
-      approxCigs: Math.max(1, approxCigs),
+      approxCigs: formattedCigs,
     };
   }, [adoptedSwapIds, profile, currentPm25]);
 
@@ -309,32 +318,44 @@ export const SwapsPage: React.FC = () => {
       </div>
 
       {/* Active Weekly Dividends Sticky Banner */}
-      <div className="bg-primary text-on-primary rounded-2xl p-space-md lg:p-space-lg shadow-xl flex flex-col md:flex-row items-center justify-between gap-space-md">
-        <div className="flex items-center gap-space-md">
-          <div className="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-secondary-fixed text-[26px]">eco</span>
-          </div>
-          <div>
-            <div className="font-label-md text-label-md text-primary-fixed uppercase tracking-wider font-semibold">
-              Weekly Impact of Your Active Swaps
+      {weeklyImpact.qualifyingCount > 0 && (
+        <div className="bg-primary text-on-primary rounded-2xl p-space-md lg:p-space-lg shadow-xl flex flex-col md:flex-row items-center justify-between gap-space-md">
+          <div className="flex items-center gap-space-md">
+            <div className="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-secondary-fixed text-[26px]">eco</span>
             </div>
-            <div className="font-headline-sm text-headline-sm text-white font-bold tracking-tight">
-              {weeklyImpact.totalUg} µg PM2.5 avoided <span className="text-primary-fixed opacity-70">·</span>{' '}
-              {weeklyImpact.totalCo2} kg CO₂ saved <span className="text-primary-fixed opacity-70">·</span>{' '}
-              About {weeklyImpact.approxCigs} cigarettes avoided
+            <div>
+              <div className="font-label-md text-label-md text-primary-fixed uppercase tracking-wider font-semibold">
+                Weekly Impact of Your Active Swaps
+              </div>
+              <div className="font-headline-sm text-headline-sm text-white font-bold tracking-tight">
+                {weeklyImpact.totalUg > 0 && `${weeklyImpact.totalUg} µg PM2.5 avoided`}
+                {weeklyImpact.totalCo2 > 0 && (
+                  <>
+                    <span className="text-primary-fixed opacity-70"> · </span>
+                    {weeklyImpact.totalCo2} kg CO₂ saved
+                  </>
+                )}
+                {weeklyImpact.approxCigs !== '0' && (
+                  <>
+                    <span className="text-primary-fixed opacity-70"> · </span>
+                    About {weeklyImpact.approxCigs.replace('~', '')} cigarettes avoided
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <button
-          type="button"
-          onClick={() => setShowFormulaModal(true)}
-          className="px-4 py-2.5 rounded-xl font-label-md text-label-md bg-secondary-fixed text-on-secondary-fixed hover:bg-secondary-fixed-dim transition-colors flex items-center gap-1 font-bold shadow-sm shrink-0"
-        >
-          <span>How this is calculated</span>
-          <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setShowFormulaModal(true)}
+            className="px-4 py-2.5 rounded-xl font-label-md text-label-md bg-secondary-fixed text-on-secondary-fixed hover:bg-secondary-fixed-dim transition-colors flex items-center gap-1 font-bold shadow-sm shrink-0"
+          >
+            <span>How this is calculated</span>
+            <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+          </button>
+        </div>
+      )}
 
       {/* Formula Explainer Modal */}
       {showFormulaModal && (

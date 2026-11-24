@@ -78,9 +78,18 @@ export interface PlannedAction {
   completed?: boolean;
 }
 
+export interface EffectiveSlice {
+  hour: number;
+  fraction: number;
+  fEnv: number;
+  fMask: number;
+}
+
 export interface ImpactReceipt {
   exposureAvoidedUg: number | null;
   co2SavedKg: number | null;
+  baselineSlices?: EffectiveSlice[];
+  alternativeSlices?: EffectiveSlice[];
   explanation?: string;
   calculationBreakdown?: {
     baselineExposureUg?: number;
@@ -94,12 +103,12 @@ export interface ImpactReceipt {
 export interface HourlyForecastPoint {
   time: string; // ISO string
   hour: number; // 0-23
-  pm2_5: number;
-  pm10: number;
-  us_aqi: number;
-  temperature_2m?: number;
-  relative_humidity_2m?: number;
-  wind_speed_10m?: number;
+  pm2_5: number | null;
+  pm10: number | null;
+  us_aqi: number | null;
+  temperature_2m?: number | null;
+  relative_humidity_2m?: number | null;
+  wind_speed_10m?: number | null;
 }
 
 export interface HourlyForecast {
