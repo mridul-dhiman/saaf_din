@@ -128,7 +128,7 @@ export const Shell: React.FC = () => {
             <span className="font-label-md text-label-md text-on-surface font-semibold">{todayFormatted}</span>
             <span className="text-outline-variant font-label-md">·</span>
             <span className="font-label-md text-label-md text-on-surface-variant">
-              {t.banner.forecastSource} · updated live
+              {t.banner.forecastSource}
             </span>
           </div>
         </div>

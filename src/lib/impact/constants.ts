@@ -103,6 +103,61 @@ export const EMISSION_FACTORS: Record<TravelMode, number> = {
 export const CIGARETTE_EQUIVALENT_UG_PER_M3_24H = 22;
 export const CIGARETTE_HOURS_DENOMINATOR = 22 * 24; // 528 µg·h/m³
 
+/**
+ * Tolerance percentage for simulator exposure comparisons.
+ * Differences within +/- this percentage are reported as "comparable".
+ */
+export const SIMULATOR_COMPARABLE_TOLERANCE_PCT = 5;
+
+/**
+ * Single source of truth for constant sources and verification status across the app.
+ * Reused in HowWeCalculatePage and ReceiptModal.
+ */
+export const SOURCES = {
+  c_outdoor: {
+    title: 'C_outdoor',
+    source: 'Open-Meteo CAMS atmospheric dispersion model',
+    sourceUrl: 'https://open-meteo.com/en/docs/air-quality-api',
+    status: 'external model API',
+  },
+  f_env: {
+    title: 'F_env (Environment Penetration)',
+    source: 'Microenvironment infiltration literature defaults',
+    status: 'assumption, not verified',
+  },
+  f_mask: {
+    title: 'F_mask (Mask Penetration)',
+    source: 'Particulate respirator fit & filtration defaults',
+    status: 'assumption, not verified',
+  },
+  ir: {
+    title: 'Inhalation Rates (IR)',
+    source: 'US EPA Exposure Factors Handbook, chapter 6',
+    status: 'assumption, not verified',
+  },
+  ef: {
+    title: 'Emission Factors (EF)',
+    source: 'Passenger transport emission estimates',
+    status: 'assumption, not verified',
+  },
+  cigs: {
+    title: 'Cigarette Equivalence',
+    source: 'Berkeley Earth (Muller & Muller 2015)',
+    sourceUrl: 'https://berkeleyearth.org/air-pollution-and-cigarette-equivalence/',
+    status: 'confirmed in source',
+  },
+  purifier_watts: {
+    title: 'Purifier Power Rating',
+    source: 'Domestic HEPA purifier nominal power',
+    status: 'assumption, not verified',
+  },
+  grid_emission: {
+    title: 'Grid Emission Factor',
+    source: 'Central Electricity Authority baseline database approximation',
+    status: 'assumption, not verified',
+  },
+} as const;
+
 export interface ConstantSourceInfo {
   constant: string;
   value: string;

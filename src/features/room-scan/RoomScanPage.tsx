@@ -147,7 +147,7 @@ export const RoomScanPage: React.FC = () => {
               {t.roomScan.captureOrUpload}
             </h2>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Upload a wide photo of your living room, balcony door, or air purifier setup to check for draft leakage points and air cleaner flow paths.
+              {t.roomScan.sampleSubtitle}
             </p>
           </div>
 
@@ -178,7 +178,7 @@ export const RoomScanPage: React.FC = () => {
           </div>
 
           <span className="text-[11px] text-outline mt-3">
-            Images are resized in-browser (max 1024px) and never stored in Firestore.
+            {t.roomScan.privacyNote}
           </span>
         </div>
       )}
@@ -193,10 +193,10 @@ export const RoomScanPage: React.FC = () => {
 
           <div className="flex flex-col gap-1">
             <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
-              Analyzing Room Layout…
+              {t.roomScan.analyzingLayout}
             </h2>
             <p className="font-body-sm text-body-sm text-on-surface-variant max-w-sm">
-              Inspecting door perimeters, window tracks, and air cleaner positions for draft infiltration points.
+              {t.roomScan.analyzingDetail}
             </p>
           </div>
         </div>
@@ -211,10 +211,10 @@ export const RoomScanPage: React.FC = () => {
 
           <div className="flex flex-col gap-1 max-w-md">
             <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
-              Room Analysis Inconclusive
+              {t.roomScan.inconclusiveTitle}
             </h2>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Could not clearly identify sealing or airflow features in this image. Please ensure the room is well-lit and shows doors, windows, or purifier placement.
+              {t.roomScan.inconclusiveDesc}
             </p>
           </div>
 
@@ -226,7 +226,7 @@ export const RoomScanPage: React.FC = () => {
                 className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold hover:bg-primary-container transition-colors cursor-pointer shadow-sm flex items-center gap-2"
               >
                 <span className="material-symbols-outlined text-[18px]">refresh</span>
-                <span>Retry Analysis</span>
+                <span>{t.roomScan.retryAnalysis}</span>
               </button>
             )}
             <button
@@ -234,7 +234,7 @@ export const RoomScanPage: React.FC = () => {
               onClick={() => setStage('upload')}
               className="px-4 py-2.5 rounded-xl border border-surface-container bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md font-semibold transition-colors cursor-pointer"
             >
-              Upload Different Photo
+              {t.roomScan.uploadDifferent}
             </button>
           </div>
         </div>
@@ -301,7 +301,7 @@ export const RoomScanPage: React.FC = () => {
                   </span>
                   {isSampleResult && (
                     <span className="px-2 py-0.5 rounded-md bg-secondary/10 text-secondary text-[11px] font-bold">
-                      Example result
+                      {t.roomScan.exampleResult}
                     </span>
                   )}
                 </div>
@@ -310,7 +310,7 @@ export const RoomScanPage: React.FC = () => {
                   onClick={() => setStage('upload')}
                   className="font-label-sm text-label-sm text-secondary hover:underline font-bold cursor-pointer"
                 >
-                  Scan Another Room
+                  {t.roomScan.scanAnother}
                 </button>
               </div>
             </div>
@@ -320,7 +320,7 @@ export const RoomScanPage: React.FC = () => {
           <div className="lg:col-span-5 flex flex-col gap-space-sm">
             <div className="flex items-center justify-between px-1 mb-1">
               <span className="font-headline-sm text-[17px] text-on-surface font-bold">
-                Prioritized Fixes ({findings.length})
+                {t.roomScan.prioritizedFixes} ({findings.length})
               </span>
               <span className="font-label-sm text-[11px] text-on-surface-variant uppercase font-semibold">
                 Actionable Sealing
@@ -362,10 +362,10 @@ export const RoomScanPage: React.FC = () => {
                   {/* Issue & Solution */}
                   <div className="flex flex-col gap-1 text-[13px] text-on-surface-variant pl-9">
                     <p>
-                      <strong className="text-on-surface">Issue:</strong> {f.issue}
+                      <strong className="text-on-surface">{t.roomScan.issueLabel}:</strong> {f.issue}
                     </p>
                     <p>
-                      <strong className="text-secondary">Fix:</strong> {f.fix}
+                      <strong className="text-secondary">{t.roomScan.fixLabel}:</strong> {f.fix}
                     </p>
                   </div>
 

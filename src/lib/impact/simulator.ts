@@ -1,6 +1,7 @@
 import { Profile, TravelMode, HourlyForecastPoint } from '../../types';
 import {
   URBAN_SPEEDS_KMH,
+  SIMULATOR_COMPARABLE_TOLERANCE_PCT,
   EnvFactorKey,
 } from './constants';
 import { getTimeSlices, calcInhaledUg, calcExposureAvoided, makePm25Lookup } from './exposure';
@@ -114,6 +115,8 @@ export function computeSimulationScenario(
       ? 'two_wheeler'
       : baselineMode === 'bus'
       ? 'bus'
+      : baselineMode === 'metro'
+      ? 'metro'
       : 'car_closed_recirc';
 
     const baselineInhaled = calcInhaledUg(timeSlices, getHourlyPm25, {
@@ -139,18 +142,35 @@ export function computeSimulationScenario(
     const percentageCut = hasPct ? Math.round(((baselineInhaled - alternativeInhaled) / baselineInhaled) * 100) : null;
 
     let verdict = `Switching from ${baseTitle.toLowerCase()} to Metro rail`;
-    if (percentageCut !== null && avoidedUg !== null && percentageCut > 0) {
-      verdict += ` cuts ${memberName}'s inhaled particulate exposure by ~${percentageCut}%`;
-      if (co2Saved !== null && co2Saved > 0) {
-        verdict += ` and prevents ${co2Saved} kg of tailpipe CO₂ emissions.`;
+    if (baselineInhaled !== null && alternativeInhaled !== null && baselineInhaled > 0) {
+      const pctDiff = ((baselineInhaled - alternativeInhaled) / baselineInhaled) * 100;
+      if (pctDiff > SIMULATOR_COMPARABLE_TOLERANCE_PCT) {
+        const cutPct = Math.round(pctDiff);
+        verdict += ` cuts ${memberName}'s inhaled particulate exposure by ~${cutPct}%`;
+        if (co2Saved !== null && co2Saved > 0) {
+          verdict += ` and prevents ${co2Saved} kg of tailpipe CO₂ emissions.`;
+        } else {
+          verdict += `.`;
+        }
+      } else if (pctDiff < -SIMULATOR_COMPARABLE_TOLERANCE_PCT) {
+        const morePct = Math.round(((alternativeInhaled - baselineInhaled) / baselineInhaled) * 100);
+        if (co2Saved !== null && co2Saved > 0) {
+          verdict += ` prevents ${co2Saved} kg of tailpipe CO₂ emissions, but results in about ${morePct}% more PM2.5 exposure (computed).`;
+        } else {
+          verdict += ` results in about ${morePct}% more PM2.5 exposure (computed).`;
+        }
       } else {
-        verdict += `.`;
+        if (co2Saved !== null && co2Saved > 0) {
+          verdict += ` prevents ${co2Saved} kg of tailpipe CO₂ emissions with comparable particulate exposure (within ${SIMULATOR_COMPARABLE_TOLERANCE_PCT}%).`;
+        } else {
+          verdict += ` maintains comparable particulate exposure (within ${SIMULATOR_COMPARABLE_TOLERANCE_PCT}%).`;
+        }
       }
     } else {
       if (co2Saved !== null && co2Saved > 0) {
-        verdict += ` prevents ${co2Saved} kg of tailpipe CO₂ emissions with comparable particulate exposure.`;
+        verdict += ` prevents ${co2Saved} kg of tailpipe CO₂ emissions.`;
       } else {
-        verdict += ` maintains comparable particulate exposure.`;
+        verdict += `.`;
       }
     }
 

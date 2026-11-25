@@ -19,6 +19,7 @@ import {
   PURIFIER_WATTS,
   GRID_KG_CO2_PER_KWH,
   MODE_TO_ENV,
+  SIMULATOR_COMPARABLE_TOLERANCE_PCT,
 } from '../constants';
 import { computeActionImpact } from '../actionImpact';
 import { scoreAndFilterSwaps } from '../swaps';
@@ -875,6 +876,48 @@ describe('Phase 2: Swaps and Simulator Impact Model Tests', () => {
       expect(exhaustWithoutCooking?.start).toBe('');
       expect(exhaustWithoutCooking?.end).toBe('');
       expect(exhaustWithoutCooking?.impact.exposureAvoidedUg).toBeNull();
+    });
+
+    it('accurately states higher, lower, and comparable exposure in commute simulator verdict', () => {
+      // 1. Higher exposure: car_petrol (F_env = 0.4) to metro (F_env = 0.5)
+      // Metro has higher in-cabin particulate penetration than a closed car with recirc (+25%)
+      const profileCar: Profile = {
+        ...MOCK_PROFILE,
+        commute: { ...MOCK_PROFILE.commute, mode: 'car_petrol', distanceKm: 15 },
+      };
+      const simCar = computeSimulationScenario(profileCar, points24h, {
+        activity: 'commute',
+        timeSlot: '08:30',
+        selectedMemberId: 'm1',
+      });
+      expect(simCar.verdict).toContain('results in about 25% more PM2.5 exposure (computed)');
+      expect(simCar.verdict).toContain('prevents 2.1 kg of tailpipe CO₂ emissions');
+
+      // 2. Lower exposure: two_wheeler (F_env = 1.0) to metro (F_env = 0.5)
+      // Metro cuts exposure by 50% compared to open two-wheeler
+      const profileBike: Profile = {
+        ...MOCK_PROFILE,
+        commute: { ...MOCK_PROFILE.commute, mode: 'two_wheeler', distanceKm: 15 },
+      };
+      const simBike = computeSimulationScenario(profileBike, points24h, {
+        activity: 'commute',
+        timeSlot: '08:30',
+        selectedMemberId: 'm1',
+      });
+      expect(simBike.verdict).toContain("cuts Arjun's inhaled particulate exposure by ~50%");
+      expect(simBike.verdict).toContain('prevents 0.2 kg of tailpipe CO₂ emissions');
+
+      // 3. Comparable exposure: baseline mode with identical or within 5% F_env
+      const profileMetro: Profile = {
+        ...MOCK_PROFILE,
+        commute: { ...MOCK_PROFILE.commute, mode: 'metro', distanceKm: 15 },
+      };
+      const simMetro = computeSimulationScenario(profileMetro, points24h, {
+        activity: 'commute',
+        timeSlot: '08:30',
+        selectedMemberId: 'm1',
+      });
+      expect(simMetro.verdict).toContain(`comparable particulate exposure (within ${SIMULATOR_COMPARABLE_TOLERANCE_PCT}%)`);
     });
   });
 });

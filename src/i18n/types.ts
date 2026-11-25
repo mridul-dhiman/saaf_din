@@ -12,6 +12,9 @@ export interface TranslationDictionary {
     loading: string;
     tryDemo: string;
     actionsDone: string;
+    noData: string;
+    manage: string;
+    disclaimerMedical: string;
   };
   nav: {
     today: string;
@@ -25,12 +28,18 @@ export interface TranslationDictionary {
   banner: {
     usAqi: string;
     forecastSource: string;
+    fetchedAt: string;
     airSummary: string;
     pm25Conc: string;
     pm10Coarse: string;
     ambientTemp: string;
     relHumidity: string;
     surfaceWind: string;
+    readingUnavailable: string;
+    poorSummary: string;
+    moderateSummary: string;
+    satisfactorySummary: string;
+    defaultSummary: string;
   };
   today: {
     title: string;
@@ -46,6 +55,10 @@ export interface TranslationDictionary {
     worstWindow: string;
     bestWindow: string;
     shareCard: string;
+    hourlyStripSubtitle: string;
+    hourlyStripHint: string;
+    forecastUnavailable: string;
+    retryConnection: string;
   };
   swaps: {
     title: string;
@@ -77,6 +90,22 @@ export interface TranslationDictionary {
     mask: string;
     activity: string;
     duration: string;
+    activityCommute: string;
+    activityExercise: string;
+    activityVentilation: string;
+    usualRoutine: string;
+    baselineExposure: string;
+    baseline: string;
+    targetChoice: string;
+    optimized: string;
+    modeActivity: string;
+    filtration: string;
+    tripCo2Footprint: string;
+    verdictTitle: string;
+    addToPlan: string;
+    addedToPlan: string;
+    howCalculatedLink: string;
+    screeningModelTag: string;
   };
   roomScan: {
     title: string;
@@ -89,6 +118,23 @@ export interface TranslationDictionary {
     findings: string;
     immediateActions: string;
     disclaimer: string;
+    sampleTitle: string;
+    sampleSubtitle: string;
+    privacyNote: string;
+    analyzingLayout: string;
+    analyzingDetail: string;
+    inconclusiveTitle: string;
+    inconclusiveDesc: string;
+    retryAnalysis: string;
+    uploadDifferent: string;
+    exampleResult: string;
+    scanAnother: string;
+    prioritizedFixes: string;
+    issueLabel: string;
+    fixLabel: string;
+    highImpactBadge: string;
+    mediumImpactBadge: string;
+    lowImpactBadge: string;
   };
   assistant: {
     title: string;
@@ -97,6 +143,7 @@ export interface TranslationDictionary {
     send: string;
     suggestedQuestions: string;
     disclaimer: string;
+    recommendedRoutineAction: string;
   };
   onboarding: {
     title: string;
@@ -122,6 +169,40 @@ export interface TranslationDictionary {
     alternative: string;
     inhaled: string;
     avoided: string;
+    methodologyFormulas: string;
+    impactReceiptTitle: string;
+    howWeCalculateImpact: string;
+    scheduledWindow: string;
+    exposureAvoided: string;
+    unquantified: string;
+    baselineMinusAlt: string;
+    co2Saved: string;
+    noModeChange: string;
+    directTailpipeSaving: string;
+    governingFormulas: string;
+    readCompleteMethodology: string;
+    disclaimer: string;
+    calculationBreakdown: string;
+    durationHours: string;
+    pm25Avoided: string;
+    cigarettes: string;
+    hourlyForecastConc: string;
+    baselineParams: string;
+    altParams: string;
+    environment: string;
+    mask: string;
+    breathingRate: string;
+    baselineInhaled: string;
+    altInhaled: string;
+    travelEmissionConstants: string;
+    oneWayDistance: string;
+    baseEf: string;
+    altEf: string;
+    purifierEnergy: string;
+    powerRating: string;
+    gridEf: string;
+    gridEmissionsIncurred: string;
+    perMemberSubtotal: string;
   };
   shareCard: {
     title: string;

@@ -68,9 +68,9 @@ export const SimulatorPage: React.FC = () => {
               onChange={(e) => setActivity(e.target.value as ScenarioActivity)}
               className="px-3 py-2.5 rounded-xl bg-surface-container-low border border-surface-container text-on-surface font-label-md text-label-md focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
             >
-              <option value="commute">Work / School Commute</option>
-              <option value="exercise">Outdoor Workout &amp; Sports</option>
-              <option value="ventilation">Balcony &amp; Room Air Flow</option>
+              <option value="commute">{t.simulator.activityCommute}</option>
+              <option value="exercise">{t.simulator.activityExercise}</option>
+              <option value="ventilation">{t.simulator.activityVentilation}</option>
             </select>
           </div>
 
@@ -91,7 +91,7 @@ export const SimulatorPage: React.FC = () => {
             >
               <option value="08:30">08:30 AM (Morning Traffic Peak)</option>
               <option value="14:00">02:00 PM (Afternoon Dispersal Window)</option>
-              <option value="18:00">06:00 PM (Evening Rush &amp; Inversion)</option>
+              <option value="18:00">06:00 PM (Evening Rush Peak)</option>
             </select>
           </div>
 
@@ -129,30 +129,30 @@ export const SimulatorPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-headline-sm text-[17px] text-on-surface font-bold">
-                    Your Usual Routine
+                    {t.simulator.usualRoutine}
                   </h3>
                   <span className="font-label-sm text-[11px] text-error font-semibold">
-                    Unfiltered Baseline Exposure
+                    {t.simulator.baselineExposure}
                   </span>
                 </div>
               </div>
               <span className="px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-[11px] font-semibold uppercase">
-                Baseline
+                {t.simulator.baseline}
               </span>
             </div>
 
             {/* Matrix */}
             <div className="bg-surface-container-low rounded-xl p-3 flex flex-col gap-1.5 mb-space-md border border-surface-container">
               <div className="flex items-center justify-between text-body-sm text-[13px]">
-                <span className="text-on-surface-variant">Mode / Activity:</span>
+                <span className="text-on-surface-variant">{t.simulator.modeActivity}</span>
                 <span className="font-semibold text-on-surface">{simulationResults.baseline.title}</span>
               </div>
               <div className="flex items-center justify-between text-body-sm text-[13px]">
-                <span className="text-on-surface-variant">Environment:</span>
+                <span className="text-on-surface-variant">{t.simulator.environment}</span>
                 <span className="font-semibold text-on-surface">{simulationResults.baseline.envLabel}</span>
               </div>
               <div className="flex items-center justify-between text-body-sm text-[13px]">
-                <span className="text-on-surface-variant">Filtration:</span>
+                <span className="text-on-surface-variant">{t.simulator.filtration}</span>
                 <span className="font-semibold text-error">{simulationResults.baseline.maskLabel}</span>
               </div>
             </div>
@@ -179,7 +179,7 @@ export const SimulatorPage: React.FC = () => {
               {simulationResults.baseline.co2Kg !== null && (
                 <div className="flex items-baseline justify-between pt-2 border-t border-surface-container">
                   <span className="font-label-md text-label-md text-on-surface-variant font-medium">
-                    Trip CO₂ Footprint
+                    {t.simulator.tripCo2Footprint}
                   </span>
                   <span className="font-headline-sm text-[16px] text-on-surface font-bold">
                     {simulationResults.baseline.co2Kg} kg CO₂
@@ -205,27 +205,27 @@ export const SimulatorPage: React.FC = () => {
                     {t.simulator.alternativeScenario}
                   </h3>
                   <span className="font-label-sm text-[11px] text-secondary font-semibold">
-                    Target Routine Choice
+                    {t.simulator.targetChoice}
                   </span>
                 </div>
               </div>
               <span className="px-2.5 py-0.5 rounded-full bg-secondary-container/30 text-on-secondary-container font-label-sm text-[11px] font-bold uppercase">
-                Optimized
+                {t.simulator.optimized}
               </span>
             </div>
 
             {/* Matrix */}
             <div className="bg-surface-container-low rounded-xl p-3 flex flex-col gap-1.5 mb-space-md border border-surface-container">
               <div className="flex items-center justify-between text-body-sm text-[13px]">
-                <span className="text-on-surface-variant">Mode / Activity:</span>
+                <span className="text-on-surface-variant">{t.simulator.modeActivity}</span>
                 <span className="font-semibold text-on-surface">{simulationResults.alternative.title}</span>
               </div>
               <div className="flex items-center justify-between text-body-sm text-[13px]">
-                <span className="text-on-surface-variant">Environment:</span>
+                <span className="text-on-surface-variant">{t.simulator.environment}</span>
                 <span className="font-semibold text-on-surface">{simulationResults.alternative.envLabel}</span>
               </div>
               <div className="flex items-center justify-between text-body-sm text-[13px]">
-                <span className="text-on-surface-variant">Filtration:</span>
+                <span className="text-on-surface-variant">{t.simulator.filtration}</span>
                 <span className="font-semibold text-secondary">{simulationResults.alternative.maskLabel}</span>
               </div>
             </div>
@@ -254,7 +254,7 @@ export const SimulatorPage: React.FC = () => {
               {simulationResults.alternative.co2Kg !== null && (
                 <div className="flex items-baseline justify-between pt-2 border-t border-surface-container">
                   <span className="font-label-md text-label-md text-on-surface-variant font-medium">
-                    Trip CO₂ Footprint
+                    {t.simulator.tripCo2Footprint}
                   </span>
                   <span className="font-headline-sm text-[16px] text-secondary font-bold">
                     {simulationResults.alternative.co2Kg} kg CO₂
@@ -274,7 +274,7 @@ export const SimulatorPage: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <span className="font-label-md text-label-md text-primary-fixed uppercase tracking-wider font-semibold">
-              Simulation Verdict
+              {t.simulator.verdictTitle}
             </span>
             <p className="font-body-md text-body-md text-white font-medium mt-0.5 max-w-2xl leading-snug">
               {simulationResults.verdict}
@@ -295,7 +295,7 @@ export const SimulatorPage: React.FC = () => {
             <span className="material-symbols-outlined text-[18px]">
               {addedToPlan ? 'check' : 'add_circle'}
             </span>
-            <span>{addedToPlan ? 'Added to My Plan ✓' : 'Add to My Plan'}</span>
+            <span>{addedToPlan ? t.simulator.addedToPlan : t.simulator.addToPlan}</span>
           </button>
         </div>
       </div>
@@ -308,16 +308,16 @@ export const SimulatorPage: React.FC = () => {
           className="flex items-center gap-1 text-secondary hover:underline font-semibold cursor-pointer"
         >
           <span className="material-symbols-outlined text-[16px]">help_outline</span>
-          <span>How we calculate exposure and emissions differences</span>
+          <span>{t.simulator.howCalculatedLink}</span>
         </button>
-        <span>Screening model based on US EPA &amp; India GHG standards</span>
+        <span>{t.simulator.screeningModelTag}</span>
       </div>
 
       {/* Mathematical Audit Modal */}
       {showFormulaModal && (
         <ReceiptModal
           formulaOnly
-          title="How Simulator Comparisons Are Calculated"
+          title={t.receipt.howWeCalculateImpact}
           onClose={() => setShowFormulaModal(false)}
         />
       )}

@@ -300,7 +300,7 @@ export const AssistantPage: React.FC = () => {
                 <div className="mt-2.5 pt-2.5 border-t border-surface-container flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <span className="font-label-sm text-[10px] text-secondary font-bold uppercase tracking-wider">
-                      Recommended Routine Action
+                      {t.assistant.recommendedRoutineAction}
                     </span>
                     <span className="text-[11px] text-on-surface-variant font-medium">
                       {msg.recommendedAction.start} – {msg.recommendedAction.end}

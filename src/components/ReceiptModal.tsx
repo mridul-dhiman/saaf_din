@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { EnrichedAction } from '../lib/impact/rulePlanner';
 import { ImpactReceipt } from './ImpactReceipt';
+import { useLanguage } from '../i18n';
+import { SOURCES } from '../lib/impact/constants';
 
 interface ReceiptModalProps {
   action?: EnrichedAction | null;
@@ -16,6 +18,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   title,
   onClose,
 }) => {
+  const { t } = useLanguage();
   if (!action && !formulaOnly) return null;
 
   const isFormulaOnly = formulaOnly || !action;
@@ -28,19 +31,20 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
         <div className="flex items-start justify-between gap-space-sm border-b border-surface-container pb-space-sm">
           <div className="flex flex-col">
             <span className="font-label-sm text-label-sm text-secondary font-bold uppercase tracking-wider">
-              {isFormulaOnly ? 'Methodology & Impact Formulas' : 'Impact Receipt & Calculation Breakdown'}
+              {isFormulaOnly ? t.receipt.methodologyFormulas : t.receipt.impactReceiptTitle}
             </span>
             <h3 className="font-headline-sm text-[18px] text-on-surface font-bold mt-0.5">
-              {isFormulaOnly ? (title || 'How We Calculate Impact') : action?.title}
+              {isFormulaOnly ? (title || t.receipt.howWeCalculateImpact) : action?.title}
             </h3>
             {!isFormulaOnly && action && action.start && action.end && (
               <span className="text-[12px] text-on-surface-variant">
-                Scheduled window: {action.start} – {action.end}
+                {t.receipt.scheduledWindow} {action.start} – {action.end}
               </span>
             )}
           </div>
           <button
             onClick={onClose}
+            aria-label={t.common.close}
             className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-container text-outline hover:text-on-surface transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
@@ -52,29 +56,29 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           <div className="grid grid-cols-2 gap-space-sm">
             <div className="bg-surface-container-low rounded-xl p-3 flex flex-col">
               <span className="font-label-sm text-[11px] text-on-surface-variant uppercase font-semibold">
-                Exposure Avoided
+                {t.receipt.exposureAvoided}
               </span>
               <span className="font-headline-sm text-headline-sm font-bold text-primary mt-1">
                 {action.impact.exposureAvoidedUg !== null
                   ? `${action.impact.exposureAvoidedUg} µg PM2.5`
-                  : 'Unquantified'}
+                  : t.receipt.unquantified}
               </span>
               <span className="text-[10px] text-outline mt-0.5">
-                Baseline inhaled minus alternative
+                {t.receipt.baselineMinusAlt}
               </span>
             </div>
 
             <div className="bg-surface-container-low rounded-xl p-3 flex flex-col">
               <span className="font-label-sm text-[11px] text-on-surface-variant uppercase font-semibold">
-                CO₂ Emissions Saved
+                {t.receipt.co2Saved}
               </span>
               <span className="font-headline-sm text-headline-sm font-bold text-secondary mt-1">
                 {action.impact.co2SavedKg !== null
                   ? `${action.impact.co2SavedKg} kg CO₂`
-                  : 'No mode change'}
+                  : t.receipt.noModeChange}
               </span>
               <span className="text-[10px] text-outline mt-0.5">
-                Direct tailpipe saving
+                {t.receipt.directTailpipeSaving}
               </span>
             </div>
           </div>
@@ -92,7 +96,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
         {/* Governing Mathematical Formulas */}
         <div className="flex flex-col gap-2 bg-surface-container-low/60 rounded-xl p-3 text-[13px] border border-surface-container/60">
           <span className="font-label-sm text-label-sm text-on-surface font-bold uppercase">
-            Governing Impact Formulas
+            {t.receipt.governingFormulas}
           </span>
 
           <div className="flex flex-col gap-1.5 text-on-surface-variant font-mono text-[12px] bg-surface-container-lowest p-2.5 rounded-lg border border-surface-container">
@@ -109,19 +113,19 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
 
           <div className="flex flex-col gap-1 mt-1 text-on-surface-variant text-[12px]">
             <p>
-              • <strong>C_outdoor</strong>: Hourly forecast from Open-Meteo CAMS grid model.
+              • <strong>C_outdoor</strong>: {SOURCES.c_outdoor.source}.
             </p>
             <p>
-              • <strong>F_env &amp; F_mask</strong>: Penetration factors (Outdoors: 1.0, Indoors closed: 0.5, Purifier: 0.2, N95 mask: 0.3).
+              • <strong>F_env &amp; F_mask</strong>: {SOURCES.f_env.source} &amp; {SOURCES.f_mask.source}.
             </p>
             <p>
-              • <strong>Inhalation Rate (IR)</strong>: Age &amp; intensity rates from US EPA Exposure Factors Handbook.
+              • <strong>Inhalation Rate (IR)</strong>: {SOURCES.ir.source}.
             </p>
             <p>
-              • <strong>Emission Factors (EF)</strong>: India GHG Program transport factors (Solo Car: 170 g/pkm, Metro: 30 g/pkm).
+              • <strong>Emission Factors (EF)</strong>: {SOURCES.ef.source}.
             </p>
             <p>
-              • <strong>Cigarette Equivalents</strong>: Berkeley Earth rule of thumb (22 µg/m³ for 24h ≈ 1 cigarette).
+              • <strong>Cigarette Equivalents</strong>: {SOURCES.cigs.source}.
             </p>
           </div>
         </div>
@@ -135,7 +139,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">menu_book</span>
             <span className="font-label-md text-label-md font-bold">
-              Read Complete Methodology &amp; Constants Checklist
+              {t.receipt.readCompleteMethodology}
             </span>
           </div>
           <span className="material-symbols-outlined text-[18px] group-hover:translate-x-0.5 transition-transform">
@@ -149,7 +153,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
             info
           </span>
           <span>
-            Screening-level estimates intended for comparative habit guidance. Not medical advice.
+            {t.receipt.disclaimer}
           </span>
         </div>
 
@@ -159,7 +163,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           onClick={onClose}
           className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors cursor-pointer"
         >
-          Close
+          {t.common.close}
         </button>
       </div>
     </div>

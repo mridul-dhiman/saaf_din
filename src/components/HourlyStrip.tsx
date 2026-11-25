@@ -50,7 +50,7 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
             {t.today.next24Hours}
           </h2>
           <p className="font-body-sm text-body-sm text-on-surface-variant">
-            Hourly PM2.5 concentration curve and ventilation window detection
+            {t.today.hourlyStripSubtitle}
           </p>
         </div>
 
@@ -154,7 +154,7 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
                 : 'No AQI data'}
             </span>
           ) : (
-            <span className="text-[11px] text-outline">Hover or tap any bar for hourly details</span>
+            <span className="text-[11px] text-outline">{t.today.hourlyStripHint}</span>
           )}
         </div>
 

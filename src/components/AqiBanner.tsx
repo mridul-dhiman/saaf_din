@@ -1,6 +1,7 @@
 import React from 'react';
 import { HourlyForecastPoint } from '../types';
 import { getAqiBand } from '../lib/aqi';
+import { useLanguage } from '../i18n';
 
 interface AqiBannerProps {
   currentPoint: HourlyForecastPoint;
@@ -15,6 +16,7 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
   updatedAt,
   advisoryText,
 }) => {
+  const { t } = useLanguage();
   const hasAqi = currentPoint.us_aqi !== null && currentPoint.us_aqi !== undefined;
   const band = getAqiBand(currentPoint.us_aqi);
 
@@ -22,12 +24,12 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
   const summary =
     advisoryText ||
     (hasAqi && (currentPoint.us_aqi as number) > 200
-      ? 'Air quality is poor across the area. Keep windows closed and avoid intense outdoor activity.'
+      ? t.banner.poorSummary
       : hasAqi && (currentPoint.us_aqi as number) > 100
-      ? 'Air quality is moderate to sensitive. Sensitive household members should limit long outdoor exertion.'
+      ? t.banner.moderateSummary
       : hasAqi
-      ? 'Air quality is satisfactory across the area. Good window for room ventilation.'
-      : 'Current air conditions across the area.');
+      ? t.banner.satisfactorySummary
+      : t.banner.defaultSummary);
 
   return (
     <div className="w-full bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-surface-container flex flex-col gap-space-md relative overflow-hidden">
@@ -56,13 +58,13 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
                 {band.shortLabel}
               </span>
               <span className="font-label-md text-label-md px-2.5 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant font-semibold">
-                US AQI
+                {t.banner.usAqi}
               </span>
             </>
           )}
         </div>
         <span className="font-body-sm text-body-sm text-on-surface-variant">
-          {source} · fetched at {updatedAt}
+          {source} · {t.banner.fetchedAt} {updatedAt}
         </span>
       </div>
 
@@ -79,14 +81,14 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
                 {band.category}
               </span>
               <span className="font-body-sm text-body-sm text-on-surface-variant">
-                US AQI · {band.shortLabel}
+                {t.banner.usAqi} · {band.shortLabel}
               </span>
             </div>
           </div>
         ) : (
           <div className="lg:col-span-5 flex items-baseline gap-3">
             <span className="font-body-md text-body-md text-on-surface-variant">
-              Air quality reading unavailable
+              {t.banner.readingUnavailable}
             </span>
           </div>
         )}
@@ -98,7 +100,7 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant font-bold">
-              Air Quality Summary
+              {t.banner.airSummary}
             </span>
             <p className="font-body-md text-body-md text-on-surface leading-snug">
               {summary}
@@ -113,7 +115,7 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
         {currentPoint.pm2_5 !== null && currentPoint.pm2_5 !== undefined && (
           <div className="bg-surface-container-low rounded-xl p-space-sm flex flex-col justify-between border border-surface-container/40">
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
-              PM2.5 Conc.
+              {t.banner.pm25Conc}
             </span>
             <div className="flex items-baseline justify-between mt-1">
               <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
@@ -134,7 +136,7 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
         {currentPoint.pm10 !== null && currentPoint.pm10 !== undefined && (
           <div className="bg-surface-container-low rounded-xl p-space-sm flex flex-col justify-between border border-surface-container/40">
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
-              PM10 Coarse
+              {t.banner.pm10Coarse}
             </span>
             <div className="flex items-baseline justify-between mt-1">
               <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
@@ -155,7 +157,7 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
         {currentPoint.temperature_2m !== null && currentPoint.temperature_2m !== undefined && (
           <div className="bg-surface-container-low rounded-xl p-space-sm flex flex-col justify-between border border-surface-container/40">
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
-              Ambient Temp
+              {t.banner.ambientTemp}
             </span>
             <div className="flex items-baseline justify-between mt-1">
               <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
@@ -175,7 +177,7 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
         {currentPoint.relative_humidity_2m !== null && currentPoint.relative_humidity_2m !== undefined && (
           <div className="bg-surface-container-low rounded-xl p-space-sm flex flex-col justify-between border border-surface-container/40">
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
-              Rel. Humidity
+              {t.banner.relHumidity}
             </span>
             <div className="flex items-baseline justify-between mt-1">
               <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
@@ -195,7 +197,7 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
         {currentPoint.wind_speed_10m !== null && currentPoint.wind_speed_10m !== undefined && (
           <div className="bg-surface-container-low rounded-xl p-space-sm flex flex-col justify-between border border-surface-container/40 col-span-2 sm:col-span-1">
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">
-              Surface Wind
+              {t.banner.surfaceWind}
             </span>
             <div className="flex items-baseline justify-between mt-1">
               <span className="font-headline-sm text-headline-sm text-on-surface font-bold">

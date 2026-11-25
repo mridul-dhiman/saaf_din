@@ -1,5 +1,6 @@
 import React from 'react';
 import { getAqiBand } from '../lib/aqi';
+import { useLanguage } from '../i18n';
 
 export interface AqiBadgeProps {
   aqi: number | null;
@@ -14,10 +15,12 @@ export const AqiBadge: React.FC<AqiBadgeProps> = ({
   size = 'md',
   className = '',
 }) => {
+  const { t } = useLanguage();
+
   if (aqi === null) {
     return (
       <span className={`inline-flex items-center text-outline bg-surface-container px-2 py-0.5 rounded-full text-[11px] font-medium ${className}`}>
-        No data
+        {t.common.noData}
       </span>
     );
   }

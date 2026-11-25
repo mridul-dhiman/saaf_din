@@ -12,35 +12,16 @@ Read these before building:
 
 ## Status
 
-Complete application built across Phases 1 through 5, fully tested, and production-ready:
+SaafDin is built across Phases 1 through 5 as a client-side React + Vite web application:
+- **Core Engine (`src/lib/impact`, `src/lib/aqi`)**: Deterministic calculations of inhaled PM2.5 dose, travel CO₂ differences, cigarette equivalence (Berkeley Earth), multi-member household action distribution, air purifier electrical grid carbon cost, and daytime rolling ventilation window detection (06:00–22:00 window search, ≤ 150 µg/m³ threshold). 50 unit tests in Vitest.
+- **Model Integration (`src/services/gemini.ts`, `src/lib/ai`)**: Central Gemini service via Firebase AI Logic (`gemini-2.5-flash`) on the Firebase Spark plan with pure schema validators (`validatePlan`, `validateRoomFindings`, `validateAssistantReply`, `containsQuantity`). Gemini never generates numbers; all quantities originate from the impact model.
+- **Responsive Web UI (`src/app`, `src/features`, `src/components`)**: Responsive shell (desktop sidebar ≥ 1024px, mobile bottom tab bar < 1024px) covering Today (hero AQI, 24h strip, timeline, receipts, family cards), Swaps (catalogue, habit adoption), Simulator (what-if scenarios, comparative verdict), Room Scan (multimodal vision markers), Assistant (profile-grounded chat), Onboarding (3 steps, GPS geocoding, demo household), and How We Calculate (transparent equations and constants table).
+- **Persistence & Localization (`src/services/firebase.ts`, `src/i18n`)**: LocalStorage caching with offline resilience, Anonymous Firebase Auth + Firestore sync (`users/{uid}`), and full English and Hindi localization with instant header toggle.
 
-1. **Impact & AQI Engine (`src/lib/impact`, `src/lib/aqi`)**:
-   - Pure, deterministic calculation of inhaled PM2.5 particulate dose integrating hourly outdoor concentration ($C_{\text{out}}$), environment penetration ($F_{\text{env}}$), mask filtration ($F_{\text{mask}}$), volumetric inhalation rates ($\text{IR}$ by age and activity intensity), and duration ($\Delta t$).
-   - Travel $\text{CO}_2$ emissions differential based on mode-specific emission factors and distance.
-   - Berkeley Earth cigarette equivalence model ($22\,\mu\text{g/m}^3 \times 24\,\text{h} = 1\,\text{cigarette}$ avoided).
-   - Household action multi-member distribution, air purifier electrical grid carbon cost, and 24-hour rolling ventilation window detection (06:00–22:00 window search with $\le 150\,\mu\text{g/m}^3$ threshold).
-   - Fully unit-tested with Vitest (49 passing test cases).
-
-2. **Model Integration & Guardrails (`src/services/gemini.ts`, `src/lib/ai`)**:
-   - Google Gemini via Firebase AI Logic (`gemini-2.5-flash`) on the Firebase Spark plan.
-   - Centralized service module with strict response schemas and pure validators (`validatePlan`, `validateRoomFindings`, `validateAssistantReply`, `containsQuantity`).
-   - Hard architectural rule enforced: **Gemini never generates numerical estimates**; all quantities on screen originate from `src/lib/impact`.
-
-3. **Responsive Client & UI (`src/app`, `src/features`, `src/components`)**:
-   - Unified responsive layout (sidebar on desktop $\ge 1024\,\text{px}$, bottom navigation bar on mobile $< 1024\,\text{px}$).
-   - **Today**: Hero US AQI banner with source and timestamp, 24h hourly PM2.5 strip, interactive daily action timeline with clickable calculation receipt modals, family cards with routines, and impact summary ring.
-   - **Swaps**: Filterable clean habit alternative catalogue scored against live forecast, active habit adoption, and weekly dividends tracker.
-   - **Simulator**: Interactive what-if scenario modeller for activity, time slot, and member, with baseline vs. alternative dose comparison and single-action verdict.
-   - **Room Scan**: Multimodal Gemini vision screening with sample demo, 1:1 marker-to-recommendation mapping, and high/medium/low impact banding.
-   - **Assistant**: Conversational interface with profile-grounded suggested questions, non-medical screening disclaimer, and action adoption.
-   - **Onboarding**: 3-step setup (neighborhood geocoding with GPS, household members with routines, commute/cooking hours/school run), and a one-click "Try a demo household" link.
-   - **How We Calculate**: Full transparency page listing governing formulas and dynamic constants table with exact source links and verification status.
-
-4. **Persistence & Localization (`src/services/firebase.ts`, `src/i18n`)**:
-   - LocalStorage-first resilience with offline fallback displaying cache timestamps.
-   - Anonymous Firebase authentication and Firestore syncing for profiles (`users/{uid}`), daily plans (`users/{uid}/plans/{date}`), and swaps (`users/{uid}/swaps/{swapId}`).
-   - Comprehensive English and Hindi localization with instant header toggle; Western Arabic numerals `0–9` preserved across both languages.
-   - Strict cut-list enforcement: zero invented telemetry, zero fake sensors, zero medical diagnoses.
+### Known Gaps
+1. **Unverified Constants**: Except for Berkeley Earth cigarette equivalence (confirmed in Muller & Muller 2015), the remaining constants in `src/lib/impact/constants.ts` (penetration factors F_env and F_mask, inhalation rates IR, mode emission factors EF, urban travel speeds, purifier wattage, grid carbon intensity, and school run distance) are literature-based defaults or assumptions marked "assumption, not verified".
+2. **Forecast Model Initialization Timestamp**: Open-Meteo Air Quality API returns generation compute time in ms (`generationtime_ms`) but does not expose model run initialization timestamps. Forecast time is labeled as "fetched at".
+3. **Indoor Telemetry Limitation**: No domestic indoor sensor or IoT hardware exists; indoor actions rely on infiltration and ventilation math rather than live room telemetry.
 
 ## Stack
 

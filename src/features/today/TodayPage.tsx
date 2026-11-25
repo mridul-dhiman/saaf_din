@@ -218,10 +218,10 @@ export const TodayPage: React.FC = () => {
           <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
           <div className="flex flex-col gap-1">
             <span className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-              Fetching atmospheric forecast…
+              {t.common.loading}
             </span>
             <span className="font-body-sm text-body-sm text-on-surface-variant">
-              Connecting to Open-Meteo CAMS air quality model for {profile.location.name}
+              {t.banner.forecastSource} · {profile.location.name}
             </span>
           </div>
         </div>
@@ -232,14 +232,14 @@ export const TodayPage: React.FC = () => {
         <div className="bg-error-container/30 border border-error rounded-2xl p-space-lg shadow-sm flex flex-col gap-space-sm items-start">
           <div className="flex items-center gap-space-sm text-error">
             <span className="material-symbols-outlined text-[24px]">error</span>
-            <span className="font-headline-sm text-headline-sm font-semibold">Forecast unavailable</span>
+            <span className="font-headline-sm text-headline-sm font-semibold">{t.today.forecastUnavailable}</span>
           </div>
           <p className="font-body-md text-body-md text-on-surface">{error}</p>
           <button
             onClick={fetchForecast}
             className="mt-2 px-4 py-2 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary-container transition-colors"
           >
-            Retry Connection
+            {t.today.retryConnection}
           </button>
         </div>
       )}
@@ -485,7 +485,7 @@ export const TodayPage: React.FC = () => {
                     to="/onboarding"
                     className="font-label-sm text-label-sm text-secondary hover:underline font-semibold"
                   >
-                    Manage
+                    {t.common.manage}
                   </NavLink>
                 </div>
 
