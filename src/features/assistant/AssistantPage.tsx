@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useProfile } from '../../context/ProfileContext';
+import { useLanguage } from '../../i18n';
 import { currentForecastProvider } from '../../services/forecast';
 import { HourlyForecast, ActionType, PlannedAction } from '../../types';
 import { findBestAndWorstWindows } from '../../lib/aqi';
@@ -26,7 +27,8 @@ interface ChatMessage {
 }
 
 export const AssistantPage: React.FC = () => {
-  const { profile, setProfile } = useProfile();
+  const { profile } = useProfile();
+  const { language, setLanguage, t } = useLanguage();
   const [forecast, setForecast] = useState<HourlyForecast | null>(null);
   const [inputQuery, setInputQuery] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -236,12 +238,10 @@ export const AssistantPage: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <h1 className="font-headline-sm text-headline-sm text-on-surface font-bold leading-tight">
-              {profile.language === 'hi' ? 'वायु सहायक' : 'Air Assistant'}
+              {t.assistant.title}
             </h1>
             <span className="font-body-sm text-[12px] text-on-surface-variant">
-              {profile.language === 'hi'
-                ? 'आपके परिवार और वायु पूर्वानुमान पर आधारित व्यक्तिगत मार्गदर्शन'
-                : 'Personalized guidance grounded in your family profile & forecast'}
+              {t.assistant.subtitle}
             </span>
           </div>
         </div>
@@ -250,11 +250,11 @@ export const AssistantPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setProfile({ ...profile, language: profile.language === 'en' ? 'hi' : 'en' })}
+            onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
             className="px-2.5 py-1 rounded-lg border border-surface-container bg-surface-container-low hover:bg-surface-container text-on-surface font-label-sm text-[11px] font-bold transition-colors cursor-pointer"
             title="Toggle Language"
           >
-            {profile.language === 'en' ? 'हिन्दी' : 'English'}
+            {language === 'en' ? 'हिन्दी' : 'English'}
           </button>
 
           <span className="font-label-sm text-[11px] px-2.5 py-1 rounded-full bg-surface-container text-on-surface font-semibold">
@@ -396,11 +396,11 @@ export const AssistantPage: React.FC = () => {
 
       {/* Non-Medical Disclaimer */}
       <div className="flex items-center justify-center gap-1.5 text-outline text-[11px] text-center">
-        <span className="material-symbols-outlined text-[14px]">verified_user</span>
+        <span className="material-symbols-outlined text-[14px]">info</span>
         <span>
           {profile.language === 'hi'
-            ? 'साफदिन वायुमंडलीय जोखिम मूल्यांकन प्रदान करता है। नैदानिक मार्गदर्शन के लिए चिकित्सक से परामर्श लें।'
-            : 'SaafDin provides atmospheric exposure screening. For clinical guidance or medical advice, consult a physician.'}
+            ? 'साफदिन वायुमंडलीय जोखिम मूल्यांकन प्रदान करता है। व्यक्तिगत चिकित्सीय सलाह के लिए डॉक्टर से परामर्श लें।'
+            : 'SaafDin provides atmospheric exposure screening. For personal medical guidance, consult a doctor or healthcare provider.'}
         </span>
       </div>
     </div>

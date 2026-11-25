@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useProfile } from '../../context/ProfileContext';
+import { useLanguage } from '../../i18n';
 import { currentForecastProvider } from '../../services/forecast';
 import { HourlyForecast } from '../../types';
 import { ReceiptModal } from '../../components/ReceiptModal';
 import { scoreAndFilterSwaps, calculateWeeklySwapTotals, ScoredSwap } from '../../lib/impact';
+import { saveSwapsToFirestore, loadSwapsFromFirestore } from '../../services/firebase';
 
 export type SwapCategory = 'all' | 'commute' | 'cooking' | 'puja' | 'fitness' | 'high-impact';
 
 export const SwapsPage: React.FC = () => {
   const { profile } = useProfile();
+  const { t } = useLanguage();
   const [forecast, setForecast] = useState<HourlyForecast | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeCategory, setActiveCategory] = useState<SwapCategory>('all');
@@ -22,6 +25,14 @@ export const SwapsPage: React.FC = () => {
   });
 
   const [showFormulaModal, setShowFormulaModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    loadSwapsFromFirestore().then((swaps) => {
+      if (swaps && swaps.length > 0) {
+        setAdoptedSwapIds(swaps);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -38,11 +49,7 @@ export const SwapsPage: React.FC = () => {
       ? adoptedSwapIds.filter((x) => x !== id)
       : [...adoptedSwapIds, id];
     setAdoptedSwapIds(next);
-    try {
-      localStorage.setItem('saafdin_adopted_swaps', JSON.stringify(next));
-    } catch (e) {
-      console.warn(e);
-    }
+    saveSwapsToFirestore(next);
   };
 
   // Evaluate pure swaps catalogue using forecast points
@@ -78,10 +85,10 @@ export const SwapsPage: React.FC = () => {
           </div>
           <div>
             <h1 className="font-headline-sm text-headline-sm text-on-surface font-bold">
-              Clean Habit Alternatives
+              {t.swaps.title}
             </h1>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Everyday routine swaps scored against today's atmospheric forecast for {profile.location.name}
+              {t.swaps.subtitle} ({profile.location.name})
             </p>
           </div>
         </div>
@@ -97,7 +104,7 @@ export const SwapsPage: React.FC = () => {
                 : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            All Swaps
+            {t.swaps.allSwaps}
           </button>
           <button
             type="button"
@@ -108,7 +115,7 @@ export const SwapsPage: React.FC = () => {
                 : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            Transit &amp; Commute
+            {t.swaps.commute}
           </button>
           <button
             type="button"
@@ -119,7 +126,7 @@ export const SwapsPage: React.FC = () => {
                 : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            Home &amp; Cooking
+            {t.swaps.cooking}
           </button>
           <button
             type="button"
@@ -130,7 +137,7 @@ export const SwapsPage: React.FC = () => {
                 : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            Puja &amp; Rituals
+            {t.swaps.puja}
           </button>
           <button
             type="button"
@@ -141,7 +148,7 @@ export const SwapsPage: React.FC = () => {
                 : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            Fitness &amp; Outdoors
+            {t.swaps.fitness}
           </button>
           <button
             type="button"
@@ -153,7 +160,7 @@ export const SwapsPage: React.FC = () => {
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">bolt</span>
-            <span>High Impact (&gt;50 µg)</span>
+            <span>{t.swaps.highImpact}</span>
           </button>
         </div>
       </div>
@@ -203,7 +210,7 @@ export const SwapsPage: React.FC = () => {
                     </div>
                     <div className="flex flex-col">
                       <span className="font-label-sm text-[10px] text-outline uppercase font-semibold">
-                        Current Routine
+                        {t.swaps.baselineHabit}
                       </span>
                       <span className="font-body-sm text-[12px] text-on-surface leading-tight mt-0.5">
                         {swap.fromHabit}
@@ -227,7 +234,7 @@ export const SwapsPage: React.FC = () => {
                     </div>
                     <div className="flex flex-col">
                       <span className="font-label-sm text-[10px] text-secondary uppercase font-bold">
-                        Clean Alternative
+                        {t.swaps.cleanAlternative}
                       </span>
                       <span className="font-body-sm text-[12px] font-semibold text-on-surface leading-tight mt-0.5">
                         {swap.toHabit}
@@ -241,7 +248,7 @@ export const SwapsPage: React.FC = () => {
                   {/* Exposure Avoided */}
                   <div className="bg-surface-container rounded-xl p-2.5 flex flex-col">
                     <span className="font-label-sm text-[10px] text-on-surface-variant font-medium">
-                      Exposure Avoided
+                      {t.swaps.exposureAvoided}
                     </span>
                     <span className="font-headline-sm text-[15px] text-primary font-bold mt-0.5">
                       {swap.exposureAvoidedUg !== null
@@ -255,7 +262,7 @@ export const SwapsPage: React.FC = () => {
                     {swap.co2SavedKg && swap.co2SavedKg > 0 ? (
                       <>
                         <span className="font-label-sm text-[10px] text-on-surface-variant font-medium">
-                          CO₂ Saved
+                          {t.swaps.co2Saved}
                         </span>
                         <span className="font-headline-sm text-[15px] text-secondary font-bold mt-0.5">
                           {swap.co2SavedKg} kg
@@ -264,10 +271,10 @@ export const SwapsPage: React.FC = () => {
                     ) : (
                       <>
                         <span className="font-label-sm text-[10px] text-on-surface-variant font-medium">
-                          Action Benefit
+                          {t.swaps.actionBenefit}
                         </span>
                         <span className="font-body-sm text-[11px] font-semibold text-secondary leading-tight mt-0.5">
-                          {swap.specialBenefit || 'Clean habit alternative'}
+                          {swap.specialBenefit || t.swaps.cleanAlternative}
                         </span>
                       </>
                     )}
@@ -288,7 +295,7 @@ export const SwapsPage: React.FC = () => {
                 <span className="material-symbols-outlined text-[18px]">
                   {isAdopted ? 'task_alt' : 'add_circle'}
                 </span>
-                <span>{isAdopted ? 'Added to Plan ✓' : 'Add to My Plan'}</span>
+                <span>{isAdopted ? `${t.swaps.adopted} ✓` : t.swaps.adopt}</span>
               </button>
             </div>
           );
@@ -304,20 +311,20 @@ export const SwapsPage: React.FC = () => {
             </div>
             <div>
               <div className="font-label-md text-label-md text-primary-fixed uppercase tracking-wider font-semibold">
-                Weekly Impact of Your Active Swaps (per week, assuming 5 days for commute, 7 days for daily habits)
+                {t.swaps.weeklyImpact} (5 days commute, 7 days daily habits)
               </div>
               <div className="font-headline-sm text-headline-sm text-white font-bold tracking-tight">
-                {weeklyImpact.totalUg > 0 && `${weeklyImpact.totalUg} µg PM2.5 avoided`}
+                {weeklyImpact.totalUg > 0 && `${weeklyImpact.totalUg} µg PM2.5 ${t.today.pm25Avoided}`}
                 {weeklyImpact.totalCo2 > 0 && (
                   <>
                     <span className="text-primary-fixed opacity-70"> · </span>
-                    {weeklyImpact.totalCo2} kg CO₂ saved
+                    {weeklyImpact.totalCo2} kg {t.today.co2Saved}
                   </>
                 )}
                 {weeklyImpact.totalCigs > 0 && (
                   <>
                     <span className="text-primary-fixed opacity-70"> · </span>
-                    About {Math.round(weeklyImpact.totalCigs)} cigarettes avoided
+                    {Math.round(weeklyImpact.totalCigs)} {t.today.cigsAvoided}
                   </>
                 )}
               </div>
@@ -329,7 +336,7 @@ export const SwapsPage: React.FC = () => {
             onClick={() => setShowFormulaModal(true)}
             className="px-4 py-2.5 rounded-xl font-label-md text-label-md bg-secondary-fixed text-on-secondary-fixed hover:bg-secondary-fixed-dim transition-colors flex items-center gap-1 font-bold shadow-sm shrink-0 cursor-pointer"
           >
-            <span>How this is calculated</span>
+            <span>{t.today.howCalculated}</span>
             <span className="material-symbols-outlined text-[18px]">chevron_right</span>
           </button>
         </div>

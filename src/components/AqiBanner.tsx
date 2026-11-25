@@ -22,12 +22,12 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
   const summary =
     advisoryText ||
     (hasAqi && (currentPoint.us_aqi as number) > 200
-      ? 'Stagnant morning conditions trapping particulate matter. Keep non-essential ventilation closed until afternoon.'
+      ? 'Air quality is poor across the area. Keep windows closed and avoid intense outdoor activity.'
       : hasAqi && (currentPoint.us_aqi as number) > 100
-      ? 'Moderate to sensitive atmospheric dispersion. Sensitive household members should limit intense outdoor exertion.'
+      ? 'Air quality is moderate to sensitive. Sensitive household members should limit long outdoor exertion.'
       : hasAqi
-      ? 'Clean air conditions across the area. Good window for room ventilation.'
-      : 'Current atmospheric conditions across the area.');
+      ? 'Air quality is satisfactory across the area. Good window for room ventilation.'
+      : 'Current air conditions across the area.');
 
   return (
     <div className="w-full bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-surface-container flex flex-col gap-space-md relative overflow-hidden">
@@ -62,7 +62,7 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
           )}
         </div>
         <span className="font-body-sm text-body-sm text-on-surface-variant">
-          {source} · updated {updatedAt}
+          {source} · fetched at {updatedAt}
         </span>
       </div>
 
@@ -79,7 +79,7 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
                 {band.category}
               </span>
               <span className="font-body-sm text-body-sm text-on-surface-variant">
-                Estimated outdoor exposure index
+                US AQI · {band.shortLabel}
               </span>
             </div>
           </div>
@@ -161,7 +161,6 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
               <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
                 {currentPoint.temperature_2m}°C
               </span>
-              <span className="font-label-sm text-label-sm text-secondary font-medium">Surface</span>
             </div>
             <div className="w-full bg-surface-container-highest h-1.5 rounded-full mt-2 overflow-hidden">
               <div
@@ -182,7 +181,6 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
               <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
                 {currentPoint.relative_humidity_2m}%
               </span>
-              <span className="font-label-sm text-label-sm text-outline font-medium">Moisture</span>
             </div>
             <div className="w-full bg-surface-container-highest h-1.5 rounded-full mt-2 overflow-hidden">
               <div
@@ -204,7 +202,6 @@ export const AqiBanner: React.FC<AqiBannerProps> = ({
                 {currentPoint.wind_speed_10m}{' '}
                 <span className="text-body-sm font-normal text-on-surface-variant">km/h</span>
               </span>
-              <span className="font-label-sm text-label-sm text-outline font-medium">Dispersion</span>
             </div>
             <div className="w-full bg-surface-container-highest h-1.5 rounded-full mt-2 overflow-hidden">
               <div

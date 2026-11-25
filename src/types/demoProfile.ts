@@ -66,8 +66,16 @@ export const DEMO_PROFILE: Profile = {
     departs: '08:30',
     returns: '18:30',
   },
+  schoolRun: {
+    time: '07:45',
+    distanceKm: 6,
+  },
   cookingFuel: 'lpg',
   hasExhaust: true,
+  cookingTimes: [
+    { start: '07:30', end: '08:30' },
+    { start: '19:30', end: '20:30' },
+  ],
   hasPurifier: true,
   language: 'en',
 };

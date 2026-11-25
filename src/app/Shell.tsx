@@ -1,12 +1,17 @@
 import React from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, Navigate } from 'react-router-dom';
 import { useProfile } from '../context/ProfileContext';
 import { useLanguage } from '../i18n';
 
 export const Shell: React.FC = () => {
-  const { profile } = useProfile();
+  const { profile, hasProfile } = useProfile();
   const { language, setLanguage, t } = useLanguage();
   const location = useLocation();
+
+  // If first-time user has no profile in localStorage or Firestore, route to onboarding
+  if (!hasProfile && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   // Format today's date
   const todayFormatted = new Intl.DateTimeFormat(language === 'hi' ? 'hi-IN' : 'en-IN', {
@@ -153,7 +158,7 @@ export const Shell: React.FC = () => {
 
           {/* Disclaimer badge */}
           <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant text-[11px]">
-            <span className="material-symbols-outlined text-[14px] text-outline">verified_user</span>
+            <span className="material-symbols-outlined text-[14px] text-outline">info</span>
             <span>{t.disclaimer}</span>
           </div>
 

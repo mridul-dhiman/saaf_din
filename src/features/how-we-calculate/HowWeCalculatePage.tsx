@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useLanguage } from '../../i18n';
 import {
   ENV_FACTORS,
   MASK_FACTORS,
@@ -14,6 +15,8 @@ import {
 } from '../../lib/impact/constants';
 
 export const HowWeCalculatePage: React.FC = () => {
+  const { t } = useLanguage();
+
   return (
     <div className="flex flex-col gap-space-lg pb-space-xl max-w-5xl mx-auto w-full">
       {/* Page Header */}
@@ -24,11 +27,11 @@ export const HowWeCalculatePage: React.FC = () => {
             className="inline-flex items-center gap-1 text-[13px] text-secondary font-semibold hover:underline"
           >
             <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-            Back to Today's Plan
+            {t.common.back}
           </NavLink>
         </div>
         <h1 className="font-headline-xl text-[28px] lg:text-[32px] font-bold text-on-surface tracking-tight">
-          How We Calculate Impact
+          {t.howCalculated.title}
         </h1>
         <p className="font-body-md text-on-surface-variant max-w-3xl leading-relaxed">
           SaafDin enforces a strict governing architectural rule:{' '}
@@ -165,7 +168,9 @@ export const HowWeCalculatePage: React.FC = () => {
                       {key === 'none'
                         ? '0% reduction (unfiltered)'
                         : key === 'cloth'
-                        ? '30% reduction (cloth/surgical mask)'
+                        ? '30% reduction (cloth mask)'
+                        : key === 'surgical'
+                        ? '30% reduction (loose surgical mask)'
                         : '70% reduction (fitted particulate respirator)'}
                     </td>
                   </tr>
@@ -341,7 +346,7 @@ export const HowWeCalculatePage: React.FC = () => {
           outdoor atmospheric forecast.
         </p>
         <div className="p-3 rounded-xl bg-surface-container-low border border-surface-container text-[12px] text-on-surface-variant flex items-start gap-2.5">
-          <span className="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">verified_user</span>
+          <span className="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">info</span>
           <p>
             Because SaafDin does not have indoor sensors in your home, we do not guess indoor pollution numbers. For indoor
             cooking smoke and incense, we suggest clean alternatives and kitchen ventilation, explaining the health
@@ -364,11 +369,11 @@ export const HowWeCalculatePage: React.FC = () => {
           <table className="w-full text-left border-collapse text-[12px]">
             <thead className="bg-surface-container-high text-on-surface-variant font-semibold">
               <tr>
-                <th className="p-2.5">Constant</th>
-                <th className="p-2.5">Value</th>
-                <th className="p-2.5">Unit</th>
-                <th className="p-2.5">Source</th>
-                <th className="p-2.5">Status</th>
+                <th className="p-2.5">{t.howCalculated.constantCol}</th>
+                <th className="p-2.5">{t.howCalculated.valueCol}</th>
+                <th className="p-2.5">{t.howCalculated.unitCol}</th>
+                <th className="p-2.5">{t.howCalculated.sourceCol}</th>
+                <th className="p-2.5">{t.howCalculated.statusCol}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container">
@@ -400,7 +405,9 @@ export const HowWeCalculatePage: React.FC = () => {
                           : 'bg-surface-container-highest text-on-surface-variant font-normal'
                       }`}
                     >
-                      {item.status}
+                      {item.status === 'confirmed in source'
+                        ? t.howCalculated.confirmedInSource
+                        : t.howCalculated.assumption}
                     </span>
                   </td>
                 </tr>

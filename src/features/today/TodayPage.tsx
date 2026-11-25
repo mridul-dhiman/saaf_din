@@ -11,7 +11,9 @@ import { generateRuleBasedPlan, EnrichedAction } from '../../lib/impact/rulePlan
 import { generateGeminiPlan } from '../../services/gemini';
 import { ReceiptModal } from '../../components/ReceiptModal';
 import { ShareCardModal } from '../../components/ShareCardModal';
+import { StatPill } from '../../components/StatPill';
 import { formatCigarettes, calcTotalCigarettesAvoided, makePm25Lookup } from '../../lib/impact';
+import { savePlanToFirestore, loadPlanFromFirestore } from '../../services/firebase';
 
 export const TodayPage: React.FC = () => {
   const { profile } = useProfile();
@@ -26,7 +28,6 @@ export const TodayPage: React.FC = () => {
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
 
   const todayDateStr = new Date().toISOString().slice(0, 10);
-  const storagePlanKey = `saafdin_plan_${todayDateStr}`;
 
   const fetchForecast = async () => {
     setLoading(true);
@@ -69,15 +70,6 @@ export const TodayPage: React.FC = () => {
 
     // First render immediate rule-based plan so UI is never blank
     const initialPlan = generateRuleBasedPlan(profile, forecast.points, windowsResult);
-    
-    // Check local completion state
-    let savedCompletion: Record<string, boolean> = {};
-    try {
-      const saved = localStorage.getItem(storagePlanKey);
-      if (saved) savedCompletion = JSON.parse(saved);
-    } catch (e) {
-      // ignore
-    }
 
     // Check custom actions added via Assistant
     let customActions: EnrichedAction[] = [];
@@ -90,7 +82,7 @@ export const TodayPage: React.FC = () => {
       // ignore
     }
 
-    const applyCompletions = (planList: EnrichedAction[]) => {
+    const applyCompletions = (planList: EnrichedAction[], completionMap: Record<string, boolean>) => {
       const existingIds = new Set(planList.map((a) => a.id));
       const combined = [...planList];
       for (const custom of customActions) {
@@ -100,31 +92,44 @@ export const TodayPage: React.FC = () => {
       }
       return combined.map((act) => ({
         ...act,
-        completed: savedCompletion[act.id] !== undefined ? savedCompletion[act.id] : act.completed,
+        completed: completionMap[act.id] !== undefined ? completionMap[act.id] : act.completed,
       }));
     };
 
-    setActions(applyCompletions(initialPlan));
+    // Load saved plan from localStorage/Firestore first
+    loadPlanFromFirestore(todayDateStr).then((savedData) => {
+      if (!active) return;
+      const savedCompletion = savedData?.completionMap || {};
+      const planToUse = savedData?.actions && savedData.actions.length > 0
+        ? savedData.actions
+        : initialPlan;
+      setActions(applyCompletions(planToUse, savedCompletion));
 
-    // Load adopted swaps to feed into Gemini prompt
-    let adoptedSwapIds: string[] = [];
-    try {
-      const savedSwaps = localStorage.getItem('saafdin_adopted_swaps');
-      if (savedSwaps) adoptedSwapIds = JSON.parse(savedSwaps);
-    } catch (e) {
-      // ignore
-    }
+      // Load adopted swaps to feed into Gemini prompt
+      let adoptedSwapIds: string[] = [];
+      try {
+        const savedSwaps = localStorage.getItem('saafdin_adopted_swaps');
+        if (savedSwaps) adoptedSwapIds = JSON.parse(savedSwaps);
+      } catch (e) {
+        // ignore
+      }
 
-    // Then attempt Gemini plan asynchronously
-    generateGeminiPlan(profile, forecast.points, windowsResult, adoptedSwapIds)
-      .then((geminiPlan) => {
-        if (active && geminiPlan.length > 0) {
-          setActions(applyCompletions(geminiPlan));
-        }
-      })
-      .catch((err) => {
-        console.warn('Gemini plan generation error, maintaining rule-based plan:', err);
-      });
+      // Then attempt Gemini plan asynchronously
+      generateGeminiPlan(profile, forecast.points, windowsResult, adoptedSwapIds)
+        .then((geminiPlan) => {
+          if (active && geminiPlan.length > 0) {
+            const enrichedWithCompletions = applyCompletions(geminiPlan, savedCompletion);
+            setActions(enrichedWithCompletions);
+            savePlanToFirestore(todayDateStr, {
+              actions: enrichedWithCompletions,
+              completionMap: savedCompletion,
+            });
+          }
+        })
+        .catch((err) => {
+          console.warn('Gemini plan generation error, maintaining rule-based plan:', err);
+        });
+    });
 
     return () => {
       active = false;
@@ -138,16 +143,12 @@ export const TodayPage: React.FC = () => {
     );
     setActions(updated);
 
-    // Persist completion state
-    try {
-      const stateMap = updated.reduce<Record<string, boolean>>((acc, act) => {
-        acc[act.id] = !!act.completed;
-        return acc;
-      }, {});
-      localStorage.setItem(storagePlanKey, JSON.stringify(stateMap));
-    } catch (e) {
-      console.warn('Error persisting plan completions:', e);
-    }
+    // Persist completion state to localStorage and Firestore
+    const stateMap = updated.reduce<Record<string, boolean>>((acc, act) => {
+      acc[act.id] = !!act.completed;
+      return acc;
+    }, {});
+    savePlanToFirestore(todayDateStr, { actions: updated, completionMap: stateMap });
   };
 
   // Calculations for Today's Impact Card
@@ -268,11 +269,11 @@ export const TodayPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary text-[24px]">checklist</span>
                   <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                    Action Plan for Today
+                    {t.today.title}
                   </h2>
                 </div>
                 <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">
-                  {completedCount} of {totalActionsCount} actions done
+                  {completedCount} of {totalActionsCount} {t.today.actionsDone}
                 </span>
               </div>
 
@@ -323,27 +324,27 @@ export const TodayPage: React.FC = () => {
                           {/* Impact Receipt Pills (Clickable) */}
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {act.impact.exposureAvoidedUg !== null && (
-                              <button
-                                type="button"
+                              <StatPill
+                                icon="filter_alt"
+                                value={act.impact.exposureAvoidedUg}
+                                unit="µg PM2.5"
+                                variant="primary"
+                                size="sm"
                                 onClick={() => setSelectedActionForReceipt(act)}
-                                className="inline-flex items-center gap-1 font-label-sm text-label-sm text-primary font-bold bg-primary-fixed/40 hover:bg-primary-fixed/70 px-2 py-0.5 rounded-md transition-colors cursor-pointer"
                                 title="Click to view calculation breakdown"
-                              >
-                                <span className="material-symbols-outlined text-[13px]">filter_alt</span>
-                                <span>{act.impact.exposureAvoidedUg} µg PM2.5</span>
-                              </button>
+                              />
                             )}
 
                             {act.impact.co2SavedKg !== null && (
-                              <button
-                                type="button"
+                              <StatPill
+                                icon="eco"
+                                value={act.impact.co2SavedKg}
+                                unit="kg CO₂"
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => setSelectedActionForReceipt(act)}
-                                className="inline-flex items-center gap-1 font-label-sm text-label-sm text-secondary font-bold bg-secondary-fixed/50 hover:bg-secondary-fixed/80 px-2 py-0.5 rounded-md transition-colors cursor-pointer"
                                 title="Click to view emission calculation"
-                              >
-                                <span className="material-symbols-outlined text-[13px]">eco</span>
-                                <span>{act.impact.co2SavedKg} kg CO₂</span>
-                              </button>
+                              />
                             )}
                           </div>
                         </div>
@@ -372,7 +373,7 @@ export const TodayPage: React.FC = () => {
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-secondary text-[20px]">eco</span>
                     <span className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                      Today's impact
+                      {t.today.todaysImpact}
                     </span>
                   </div>
                   <button
@@ -380,7 +381,7 @@ export const TodayPage: React.FC = () => {
                     onClick={() => setShowFormulaModal(true)}
                     className="font-label-sm text-label-sm text-secondary hover:underline cursor-pointer font-semibold"
                   >
-                    How this is calculated
+                    {t.today.howCalculated}
                   </button>
                 </div>
 
@@ -393,7 +394,7 @@ export const TodayPage: React.FC = () => {
                           {totalPm25AvoidedUg} µg
                         </span>
                         <span className="font-label-sm text-[10px] text-on-surface-variant mt-0.5 leading-tight">
-                          PM2.5 avoided
+                          {t.today.pm25Avoided}
                         </span>
                       </div>
                     )}
@@ -404,7 +405,7 @@ export const TodayPage: React.FC = () => {
                           {totalCo2SavedKg} kg
                         </span>
                         <span className="font-label-sm text-[10px] text-on-surface-variant mt-0.5 leading-tight">
-                          CO₂ saved
+                          {t.today.co2Saved}
                         </span>
                       </div>
                     )}
@@ -415,7 +416,7 @@ export const TodayPage: React.FC = () => {
                           {approxCigarettesAvoided}
                         </span>
                         <span className="font-label-sm text-[10px] text-on-surface-variant mt-0.5 leading-tight">
-                          cigarettes avoided
+                          {t.today.cigsAvoided}
                         </span>
                       </div>
                     )}
@@ -429,7 +430,7 @@ export const TodayPage: React.FC = () => {
                       {completedCount} of {totalActionsCount}
                     </span>
                     <span className="font-body-sm text-[12px] text-on-surface-variant">
-                      actions completed today
+                      {t.today.actionsDone}
                     </span>
                   </div>
 
@@ -478,7 +479,7 @@ export const TodayPage: React.FC = () => {
               <div className="bg-surface-container-lowest rounded-2xl p-space-md shadow-sm border border-surface-container flex flex-col gap-space-sm">
                 <div className="flex items-center justify-between">
                   <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                    Family
+                    {t.today.family}
                   </h3>
                   <NavLink
                     to="/onboarding"
@@ -505,12 +506,17 @@ export const TodayPage: React.FC = () => {
                           <span className="font-body-sm text-[11px] text-on-surface-variant capitalize truncate">
                             {member.ageGroup}
                           </span>
+                          {member.routine && (
+                            <span className="font-label-sm text-[10px] text-primary truncate">
+                              {member.routine.label} ({member.routine.start}–{member.routine.end})
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 flex-wrap justify-end">
                         {memberSubtotals[member.id] > 0 && (
                           <span className="font-label-sm text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
-                            {memberSubtotals[member.id]} µg avoided
+                            {memberSubtotals[member.id]} µg {t.today.pm25Avoided}
                           </span>
                         )}
                         {member.sensitivities.map((s) => (
@@ -533,7 +539,7 @@ export const TodayPage: React.FC = () => {
                 className="w-full bg-primary text-on-primary py-3 px-space-md rounded-xl font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-primary-container transition-colors shadow-sm font-semibold"
               >
                 <span className="material-symbols-outlined text-[20px]">forum</span>
-                <span>Consult Air Assistant</span>
+                <span>{t.today.consultAssistant}</span>
               </NavLink>
             </div>
           </div>
@@ -541,10 +547,12 @@ export const TodayPage: React.FC = () => {
       )}
 
       {/* Individual Action Impact Receipt Modal */}
-      <ReceiptModal
-        action={selectedActionForReceipt}
-        onClose={() => setSelectedActionForReceipt(null)}
-      />
+      {selectedActionForReceipt && (
+        <ReceiptModal
+          action={selectedActionForReceipt}
+          onClose={() => setSelectedActionForReceipt(null)}
+        />
+      )}
 
       {/* General Impact Model Formula Modal */}
       {showFormulaModal && (

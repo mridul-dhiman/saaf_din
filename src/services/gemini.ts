@@ -250,7 +250,7 @@ export async function analyseRoom(base64Image: string): Promise<RoomFinding[] | 
           responseSchema: roomScanResponseSchema,
           temperature: 0.2,
         },
-        systemInstruction: `You are an expert indoor air quality auditor. Inspect the photo of a room for:
+        systemInstruction: `You are an expert indoor air quality assistant. Inspect the photo of a room for:
 1. Leak points (gaps around balcony doors, unsealed windows, AC conduit wall entries)
 2. Airflow obstructions (purifiers pushed against walls, blocked intake vents, closed corridors)
 3. Unvented combustion sources (incense/agarbatti, dhoop, open kitchen gas fumes, unvented heating)
@@ -272,8 +272,8 @@ CRITICAL RULES:
           },
         },
         errorHint
-          ? `Audit this room for air infiltration leaks and air cleaner placement. Correction note: ${errorHint}`
-          : 'Audit this room for air infiltration leaks and air cleaner placement.',
+          ? `Inspect this room for air infiltration leaks and air cleaner placement. Correction note: ${errorHint}`
+          : 'Inspect this room for air infiltration leaks and air cleaner placement.',
       ];
 
       const response = await model.generateContent(promptParts);

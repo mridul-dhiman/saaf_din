@@ -107,7 +107,7 @@ export const HABIT_SWAPS: HabitSwap[] = [
     category: 'fitness',
     difficulty: 'Easy',
     icon: 'fitness_center',
-    fromHabit: 'Early morning road jog at 6:30 AM during winter inversion',
+    fromHabit: 'Early morning road jog at 6:30 AM during peak morning pollution',
     toHabit: 'Purified indoor treadmill workout or afternoon gym session at 2:00 PM',
     getImpact: (_profile, currentPm25) => {
       // Vigorous running IR = 3.0 m3/h. Difference: (1.0 - 0.2) * 1h * 3.0 * currentPm25

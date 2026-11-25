@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '../../context/ProfileContext';
+import { useLanguage } from '../../i18n';
 import { currentForecastProvider, Place } from '../../services/forecast';
-import { Member, AgeGroup, Sensitivity, TravelMode, CookingFuel, Profile } from '../../types';
-import { DEMO_PROFILE } from '../../types/demoProfile';
+import { Member, AgeGroup, Sensitivity, TravelMode, CookingFuel, Profile, Intensity, CookingTimeRange } from '../../types';
 import { saveProfileToFirestore } from '../../services/firebase';
 import { getAqiBand } from '../../lib/aqi';
 
 export const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, setProfile } = useProfile();
+  const { profile, setProfile, loadDemoProfile } = useProfile();
+  const { t } = useLanguage();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
@@ -30,10 +31,31 @@ export const OnboardingPage: React.FC = () => {
   const [hasExhaust, setHasExhaust] = useState(profile.hasExhaust);
   const [hasPurifier, setHasPurifier] = useState(profile.hasPurifier);
 
+  // Cooking Times & School Run state
+  const [cookingTimes, setCookingTimes] = useState<CookingTimeRange[]>(
+    profile.cookingTimes && profile.cookingTimes.length > 0
+      ? profile.cookingTimes
+      : [
+          { start: '07:30', end: '08:30' },
+          { start: '19:30', end: '20:30' },
+        ]
+  );
+  const [hasSchoolRun, setHasSchoolRun] = useState<boolean>(
+    !!profile.schoolRun || profile.members.some((m) => m.ageGroup === 'child')
+  );
+  const [schoolRunTime, setSchoolRunTime] = useState<string>(profile.schoolRun?.time || '07:45');
+  const [schoolRunDistance, setSchoolRunDistance] = useState<number>(profile.schoolRun?.distanceKm || 6);
+
   // Member editing modal/inline state
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberAgeGroup, setNewMemberAgeGroup] = useState<AgeGroup>('adult');
   const [newMemberSensitivities, setNewMemberSensitivities] = useState<Sensitivity[]>([]);
+  const [hasRoutine, setHasRoutine] = useState(false);
+  const [newMemberRoutineLabel, setNewMemberRoutineLabel] = useState('');
+  const [newMemberRoutineStart, setNewMemberRoutineStart] = useState('07:00');
+  const [newMemberRoutineEnd, setNewMemberRoutineEnd] = useState('08:00');
+  const [newMemberRoutineOutdoors, setNewMemberRoutineOutdoors] = useState(true);
+  const [newMemberRoutineIntensity, setNewMemberRoutineIntensity] = useState<Intensity>('moderate');
 
   // Fetch AQI preview for selected location
   useEffect(() => {
@@ -105,34 +127,43 @@ export const OnboardingPage: React.FC = () => {
     );
   };
 
-  // Demo Household Loader
+  // Demo Household Loader (User instruction C: loads DEMO_PROFILE with isDemo: true, saves to localStorage, routes to /today)
   const handleLoadDemo = () => {
-    setLocationName(DEMO_PROFILE.location.name);
-    setLat(DEMO_PROFILE.location.lat);
-    setLon(DEMO_PROFILE.location.lon);
-    setMembers(DEMO_PROFILE.members);
-    setCommuteMode(DEMO_PROFILE.commute.mode);
-    setCommuteDistance(DEMO_PROFILE.commute.distanceKm);
-    setDeparts(DEMO_PROFILE.commute.departs);
-    setReturns(DEMO_PROFILE.commute.returns);
-    setCookingFuel(DEMO_PROFILE.cookingFuel);
-    setHasExhaust(DEMO_PROFILE.hasExhaust);
-    setHasPurifier(DEMO_PROFILE.hasPurifier);
+    loadDemoProfile();
+    navigate('/today');
   };
 
   // Add Member
   const handleAddMember = () => {
     if (!newMemberName.trim()) return;
+
+    const routine = hasRoutine && newMemberRoutineLabel.trim()
+      ? {
+          label: newMemberRoutineLabel.trim(),
+          start: newMemberRoutineStart,
+          end: newMemberRoutineEnd,
+          outdoors: newMemberRoutineOutdoors,
+          intensity: newMemberRoutineIntensity,
+        }
+      : undefined;
+
     const newMember: Member = {
       id: `m_${Date.now()}`,
       name: newMemberName.trim(),
       ageGroup: newMemberAgeGroup,
       sensitivities: newMemberSensitivities,
+      routine,
     };
     setMembers([...members, newMember]);
     setNewMemberName('');
     setNewMemberAgeGroup('adult');
     setNewMemberSensitivities([]);
+    setHasRoutine(false);
+    setNewMemberRoutineLabel('');
+    setNewMemberRoutineStart('07:00');
+    setNewMemberRoutineEnd('08:00');
+    setNewMemberRoutineOutdoors(true);
+    setNewMemberRoutineIntensity('moderate');
   };
 
   const handleRemoveMember = (id: string) => {
@@ -169,6 +200,11 @@ export const OnboardingPage: React.FC = () => {
       cookingFuel,
       hasExhaust,
       hasPurifier,
+      cookingTimes: cookingTimes.filter((ct) => ct.start && ct.end),
+      schoolRun: hasSchoolRun && schoolRunDistance > 0 ? {
+        time: schoolRunTime,
+        distanceKm: schoolRunDistance,
+      } : undefined,
       language: profile.language || 'en',
     };
 
@@ -190,20 +226,20 @@ export const OnboardingPage: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <h1 className="font-headline-md text-headline-sm lg:text-headline-md text-on-surface font-bold">
-                Household Air Profile
+                {t.onboarding.title}
               </h1>
               <span className="font-body-sm text-body-sm text-on-surface-variant">
-                Personalized exposure screening and daily routines
+                {t.onboarding.subtitle}
               </span>
             </div>
           </div>
 
           <button
             onClick={handleLoadDemo}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary-container/20 text-on-secondary-container hover:bg-secondary-container/30 transition-colors font-label-md text-label-md font-semibold"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary-container/20 text-on-secondary-container hover:bg-secondary-container/30 transition-colors font-label-md text-label-md font-semibold cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px] text-secondary">magic_button</span>
-            <span>Try a demo household</span>
+            <span>{t.common.tryDemo}</span>
           </button>
         </div>
 
@@ -244,10 +280,10 @@ export const OnboardingPage: React.FC = () => {
         <div className="bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-surface-container flex flex-col gap-space-lg">
           <div>
             <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-              Step 1: Your Neighborhood
+              {t.onboarding.step1Title}
             </h2>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              We fetch hourly modelled air quality (CAMS/Open-Meteo) for your area.
+              {t.onboarding.step1Desc}
             </p>
           </div>
 
@@ -261,17 +297,17 @@ export const OnboardingPage: React.FC = () => {
                 type="text"
                 value={locationName}
                 onChange={(e) => handleSearch(e.target.value)}
-                placeholder="Search city, sector, or landmark (e.g. South Extension, New Delhi)"
+                placeholder={t.onboarding.searchPlaceholder}
                 className="w-full pl-11 pr-24 py-3 rounded-xl bg-surface-container-low border border-surface-container text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
               <button
                 type="button"
                 onClick={handleUseCurrentLocation}
-                className="absolute right-2 px-2.5 py-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors text-label-sm font-semibold flex items-center gap-1"
+                className="absolute right-2 px-2.5 py-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors text-label-sm font-semibold flex items-center gap-1 cursor-pointer"
                 title="Use my current GPS location"
               >
                 <span className="material-symbols-outlined text-[16px] text-primary">my_location</span>
-                <span>GPS</span>
+                <span>{t.onboarding.gpsButton}</span>
               </button>
             </div>
 
@@ -301,7 +337,7 @@ export const OnboardingPage: React.FC = () => {
           {/* Quick City Chips */}
           <div className="flex flex-col gap-1.5">
             <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">
-              Popular Urban Centers:
+              {t.onboarding.popularCities}:
             </span>
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
               {quickCities.map((city) => (
@@ -348,7 +384,7 @@ export const OnboardingPage: React.FC = () => {
                     {previewAqi}
                   </span>
                   <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">
-                    US AQI
+                    {t.banner.usAqi}
                   </span>
                 </div>
                 <span className="font-label-sm text-[11px] font-bold text-error">
@@ -365,7 +401,7 @@ export const OnboardingPage: React.FC = () => {
               onClick={() => setStep(2)}
               className="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm"
             >
-              <span>Continue to Family</span>
+              <span>{t.common.continue}</span>
               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
           </div>
@@ -377,10 +413,10 @@ export const OnboardingPage: React.FC = () => {
         <div className="bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-surface-container flex flex-col gap-space-lg">
           <div>
             <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-              Step 2: Household Members
+              {t.onboarding.step2Title}
             </h2>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Actions and exposure calculations are customized based on age and declared respiratory sensitivity.
+              {t.onboarding.step2Desc}
             </p>
           </div>
 
@@ -414,6 +450,12 @@ export const OnboardingPage: React.FC = () => {
                         </span>
                       ))}
                     </div>
+                    {member.routine && (
+                      <div className="flex items-center gap-1 mt-1 text-[11px] text-on-surface-variant font-medium">
+                        <span className="material-symbols-outlined text-[13px] text-primary">schedule</span>
+                        <span>{member.routine.label} ({member.routine.start}–{member.routine.end}{member.routine.outdoors ? ', Outdoors' : ''})</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -477,13 +519,83 @@ export const OnboardingPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Optional Routine Section */}
+            <div className="pt-2 border-t border-surface-container/60 flex flex-col gap-2">
+              <label className="flex items-center gap-2 cursor-pointer text-[12px] font-semibold text-on-surface">
+                <input
+                  type="checkbox"
+                  checked={hasRoutine}
+                  onChange={(e) => setHasRoutine(e.target.checked)}
+                  className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
+                />
+                <span>Add regular daily routine (e.g. morning walk, cricket coaching, jogging)</span>
+              </label>
+
+              {hasRoutine && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-surface-container-lowest rounded-xl border border-surface-container">
+                  <div className="sm:col-span-2">
+                    <label className="text-[11px] text-outline">Routine Description</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Morning park walk"
+                      value={newMemberRoutineLabel}
+                      onChange={(e) => setNewMemberRoutineLabel(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg bg-surface-container-low border border-surface-container text-on-surface text-body-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-outline">Start Time</label>
+                    <input
+                      type="time"
+                      value={newMemberRoutineStart}
+                      onChange={(e) => setNewMemberRoutineStart(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg bg-surface-container-low border border-surface-container text-on-surface text-body-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-outline">End Time</label>
+                    <input
+                      type="time"
+                      value={newMemberRoutineEnd}
+                      onChange={(e) => setNewMemberRoutineEnd(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg bg-surface-container-low border border-surface-container text-on-surface text-body-sm"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <label className="flex items-center gap-1.5 cursor-pointer text-[12px] text-on-surface">
+                      <input
+                        type="checkbox"
+                        checked={newMemberRoutineOutdoors}
+                        onChange={(e) => setNewMemberRoutineOutdoors(e.target.checked)}
+                        className="w-4 h-4 rounded text-primary accent-primary"
+                      />
+                      <span>Takes place outdoors</span>
+                    </label>
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-outline">Physical Intensity</label>
+                    <select
+                      value={newMemberRoutineIntensity}
+                      onChange={(e) => setNewMemberRoutineIntensity(e.target.value as Intensity)}
+                      className="w-full px-3 py-1.5 rounded-lg bg-surface-container-low border border-surface-container text-on-surface text-body-sm"
+                    >
+                      <option value="rest">Rest (Seated)</option>
+                      <option value="light">Light (Casual stroll)</option>
+                      <option value="moderate">Moderate (Brisk walk / yoga)</option>
+                      <option value="vigorous">Vigorous (Running / sports)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={handleAddMember}
               disabled={!newMemberName.trim()}
-              className="mt-1 self-start px-4 py-2 rounded-xl bg-surface-container text-primary font-label-md text-label-md font-bold hover:bg-surface-container-high transition-colors disabled:opacity-50"
+              className="mt-1 self-start px-4 py-2 rounded-xl bg-surface-container text-primary font-label-md text-label-md font-bold hover:bg-surface-container-high transition-colors disabled:opacity-50 cursor-pointer"
             >
-              + Add Member
+              + {t.onboarding.addMember}
             </button>
           </div>
 
@@ -492,16 +604,16 @@ export const OnboardingPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="px-4 py-2 rounded-xl border border-surface-container text-on-surface font-label-md text-label-md font-semibold hover:bg-surface-container transition-colors"
+              className="px-4 py-2 rounded-xl border border-surface-container text-on-surface font-label-md text-label-md font-semibold hover:bg-surface-container transition-colors cursor-pointer"
             >
-              Back
+              {t.common.back}
             </button>
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm"
+              className="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
             >
-              <span>Continue to Habits</span>
+              <span>{t.common.continue}</span>
               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
           </div>
@@ -513,10 +625,10 @@ export const OnboardingPage: React.FC = () => {
         <div className="bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-surface-container flex flex-col gap-space-lg">
           <div>
             <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-              Step 3: Commute & Indoor Baseline
+              {t.onboarding.step3Title}
             </h2>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Powers travel emission receipts and indoor infiltration assumptions.
+              {t.onboarding.step3Desc}
             </p>
           </div>
 
@@ -628,6 +740,106 @@ export const OnboardingPage: React.FC = () => {
                 />
               </label>
             </div>
+
+            {/* Cooking Times Ranges */}
+            <div className="flex flex-col gap-2 pt-2 border-t border-surface-container">
+              <label className="text-[12px] text-on-surface-variant font-medium">
+                Daily Cooking Hours (used to schedule kitchen ventilation)
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+                <div className="p-2.5 rounded-xl bg-surface-container-low border border-surface-container flex flex-col gap-1.5">
+                  <span className="text-[11px] font-bold text-on-surface">Morning / Midday Cooking</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      value={cookingTimes[0]?.start || '07:30'}
+                      onChange={(e) => {
+                        const next = [...cookingTimes];
+                        next[0] = { start: e.target.value, end: next[0]?.end || '08:30' };
+                        setCookingTimes(next);
+                      }}
+                      className="flex-1 px-2 py-1 rounded-lg bg-surface-container-lowest border border-surface-container text-on-surface text-[12px]"
+                    />
+                    <span className="text-outline text-[12px]">to</span>
+                    <input
+                      type="time"
+                      value={cookingTimes[0]?.end || '08:30'}
+                      onChange={(e) => {
+                        const next = [...cookingTimes];
+                        next[0] = { start: next[0]?.start || '07:30', end: e.target.value };
+                        setCookingTimes(next);
+                      }}
+                      className="flex-1 px-2 py-1 rounded-lg bg-surface-container-lowest border border-surface-container text-on-surface text-[12px]"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-surface-container-low border border-surface-container flex flex-col gap-1.5">
+                  <span className="text-[11px] font-bold text-on-surface">Evening / Dinner Cooking</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      value={cookingTimes[1]?.start || '19:30'}
+                      onChange={(e) => {
+                        const next = [...cookingTimes];
+                        next[1] = { start: e.target.value, end: next[1]?.end || '20:30' };
+                        setCookingTimes(next);
+                      }}
+                      className="flex-1 px-2 py-1 rounded-lg bg-surface-container-lowest border border-surface-container text-on-surface text-[12px]"
+                    />
+                    <span className="text-outline text-[12px]">to</span>
+                    <input
+                      type="time"
+                      value={cookingTimes[1]?.end || '20:30'}
+                      onChange={(e) => {
+                        const next = [...cookingTimes];
+                        next[1] = { start: next[1]?.start || '19:30', end: e.target.value };
+                        setCookingTimes(next);
+                      }}
+                      className="flex-1 px-2 py-1 rounded-lg bg-surface-container-lowest border border-surface-container text-on-surface text-[12px]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Optional School Run */}
+            <div className="flex flex-col gap-2 pt-2 border-t border-surface-container">
+              <label className="flex items-center gap-2 cursor-pointer text-[12px] font-semibold text-on-surface">
+                <input
+                  type="checkbox"
+                  checked={hasSchoolRun}
+                  onChange={(e) => setHasSchoolRun(e.target.checked)}
+                  className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
+                />
+                <span>Daily School Run (school drop-off or pick-up)</span>
+              </label>
+
+              {hasSchoolRun && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-surface-container-low rounded-xl border border-surface-container">
+                  <div>
+                    <label className="text-[11px] text-outline">Drop-off Time</label>
+                    <input
+                      type="time"
+                      value={schoolRunTime}
+                      onChange={(e) => setSchoolRunTime(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg bg-surface-container-lowest border border-surface-container text-on-surface text-body-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-outline">One-Way Distance (km)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={schoolRunDistance}
+                      onChange={(e) => setSchoolRunDistance(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 rounded-lg bg-surface-container-lowest border border-surface-container text-on-surface text-body-sm"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Navigation Buttons */}
@@ -635,16 +847,16 @@ export const OnboardingPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="px-4 py-2 rounded-xl border border-surface-container text-on-surface font-label-md text-label-md font-semibold hover:bg-surface-container transition-colors"
+              className="px-4 py-2 rounded-xl border border-surface-container text-on-surface font-label-md text-label-md font-semibold hover:bg-surface-container transition-colors cursor-pointer"
             >
-              Back
+              {t.common.back}
             </button>
             <button
               type="button"
               onClick={handleSaveProfile}
-              className="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm"
+              className="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
             >
-              <span>Save &amp; View Daily Plan</span>
+              <span>{t.onboarding.saveAndPlan}</span>
               <span className="material-symbols-outlined text-[18px]">check_circle</span>
             </button>
           </div>
@@ -653,7 +865,7 @@ export const OnboardingPage: React.FC = () => {
 
       {/* Privacy and Medical Disclaimer footer */}
       <div className="flex items-center gap-2 text-outline text-[12px] px-2">
-        <span className="material-symbols-outlined text-[16px]">verified_user</span>
+        <span className="material-symbols-outlined text-[16px]">info</span>
         <span>
           Profile is stored in your private Firebase document and cached in your browser. SaafDin provides screening guidance and does not replace medical advice.
         </span>

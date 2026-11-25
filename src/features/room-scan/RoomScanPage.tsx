@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../../i18n';
 import { analyseRoom } from '../../services/gemini';
 import { RoomFinding } from '../../lib/ai';
 
@@ -45,6 +46,7 @@ const DEFAULT_FINDINGS: RoomFinding[] = [
 ];
 
 export const RoomScanPage: React.FC = () => {
+  const { t } = useLanguage();
   const [stage, setStage] = useState<'upload' | 'analysing' | 'results' | 'error'>('upload');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [findings, setFindings] = useState<RoomFinding[]>([]);
@@ -124,10 +126,10 @@ export const RoomScanPage: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <h1 className="font-headline-md text-headline-sm lg:text-headline-md text-on-surface font-bold">
-              Room Scan &amp; Indoor Audit
+              {t.roomScan.title}
             </h1>
             <span className="font-body-sm text-body-sm text-on-surface-variant">
-              Based on what is visible in the photo · Visual check for air sealing and circulation, not a PM2.5 measurement
+              {t.roomScan.subtitle}
             </span>
           </div>
         </div>
@@ -142,17 +144,17 @@ export const RoomScanPage: React.FC = () => {
 
           <div className="flex flex-col gap-1 max-w-md">
             <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
-              Scan Your Living Area or Bedroom
+              {t.roomScan.captureOrUpload}
             </h2>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Upload a wide photo of your living room, balcony door, or air purifier setup. Our vision audit checks for draft leakage points and air cleaner flow paths.
+              Upload a wide photo of your living room, balcony door, or air purifier setup to check for draft leakage points and air cleaner flow paths.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
             <label className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold hover:bg-primary-container transition-colors cursor-pointer shadow-sm flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px]">upload</span>
-              <span>Upload Room Photo</span>
+              <span>{t.roomScan.uploadImage}</span>
               <input
                 type="file"
                 accept="image/*"
@@ -171,7 +173,7 @@ export const RoomScanPage: React.FC = () => {
               className="px-4 py-2.5 rounded-xl border border-surface-container bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px] text-secondary">image</span>
-              <span>Try with Sample Room</span>
+              <span>{t.roomScan.sampleDemoScan}</span>
             </button>
           </div>
 
@@ -191,7 +193,7 @@ export const RoomScanPage: React.FC = () => {
 
           <div className="flex flex-col gap-1">
             <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
-              Auditing Room Layout…
+              Analyzing Room Layout…
             </h2>
             <p className="font-body-sm text-body-sm text-on-surface-variant max-w-sm">
               Inspecting door perimeters, window tracks, and air cleaner positions for draft infiltration points.
@@ -212,7 +214,7 @@ export const RoomScanPage: React.FC = () => {
               Room Analysis Inconclusive
             </h2>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              The vision auditor could not clearly identify sealing or airflow features in this image. Please ensure the room is well-lit and shows doors, windows, or purifier placement.
+              Could not clearly identify sealing or airflow features in this image. Please ensure the room is well-lit and shows doors, windows, or purifier placement.
             </p>
           </div>
 
@@ -248,7 +250,7 @@ export const RoomScanPage: React.FC = () => {
                 {imagePreview && (
                   <img
                     src={imagePreview}
-                    alt="Audited Room"
+                    alt="Scanned Room"
                     className="w-full h-full object-cover select-none"
                   />
                 )}

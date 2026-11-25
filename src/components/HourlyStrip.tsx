@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../i18n';
 import { HourlyForecastPoint } from '../types';
-import { DayWindowsResult, getPm25ColorClass } from '../lib/aqi';
+import { DayWindowsResult, getAqiBand } from '../lib/aqi';
 
 interface HourlyStripProps {
   points: HourlyForecastPoint[];
@@ -8,6 +9,7 @@ interface HourlyStripProps {
 }
 
 export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => {
+  const { t } = useLanguage();
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   // Maximum PM2.5 in the dataset to scale bar heights smoothly (min max is at least 150)
@@ -45,7 +47,7 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
         <div>
           <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-            Next 24 hours
+            {t.today.next24Hours}
           </h2>
           <p className="font-body-sm text-body-sm text-on-surface-variant">
             Hourly PM2.5 concentration curve and ventilation window detection
@@ -56,19 +58,23 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
         <div className="flex items-center gap-space-sm font-label-sm text-label-sm text-on-surface-variant flex-wrap">
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            &lt; 50 Good
+            0–50 Good
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-            50–100 Moderate
+            51–100 Moderate
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-            101–200 Sensitive
+            101–150 Sensitive
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-error"></span>
-            200+ Severe
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+            151–200 Unhealthy
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+            201+ Severe
           </span>
         </div>
       </div>
@@ -83,7 +89,7 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
             </div>
             <div className="flex flex-col">
               <span className="font-label-sm text-label-sm text-error font-bold uppercase tracking-wider">
-                Worst Window: {windows.worstWindow.startTime} – {windows.worstWindow.endTime}
+                {t.today.worstWindow}: {windows.worstWindow.startTime} – {windows.worstWindow.endTime}
               </span>
               <span className="font-body-sm text-body-sm text-on-surface">
                 Average ~{windows.worstWindow.meanPm25} µg/m³ · Keep windows tightly sealed
@@ -119,7 +125,7 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
                 }`}
               >
                 {windows.canVentilateToday
-                  ? `Best Window: ${windows.bestWindow.label || `${windows.bestWindow.startTime} – ${windows.bestWindow.endTime}`}`
+                  ? `${t.today.bestWindow}: ${windows.bestWindow.label || `${windows.bestWindow.startTime} – ${windows.bestWindow.endTime}`}`
                   : 'No Safe Ventilation Window Today'}
               </span>
               <span className="font-body-sm text-body-sm text-on-surface">
@@ -162,9 +168,10 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
               const barHeightPercent = isNull
                 ? 6
                 : Math.max(12, Math.round(((p.pm2_5 as number) / maxPm25) * 100));
-              const colorClass = isNull
+              const aqiBand = getAqiBand(p.us_aqi);
+              const colorClass = isNull || p.us_aqi === null
                 ? 'bg-surface-container-high border border-dashed border-outline/40'
-                : getPm25ColorClass(p.pm2_5);
+                : aqiBand.bgClass;
 
               return (
                 <div

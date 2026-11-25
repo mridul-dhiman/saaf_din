@@ -139,15 +139,19 @@ export function computeSimulationScenario(
     const percentageCut = hasPct ? Math.round(((baselineInhaled - alternativeInhaled) / baselineInhaled) * 100) : null;
 
     let verdict = `Switching from ${baseTitle.toLowerCase()} to Metro rail`;
-    if (percentageCut !== null && avoidedUg !== null) {
+    if (percentageCut !== null && avoidedUg !== null && percentageCut > 0) {
       verdict += ` cuts ${memberName}'s inhaled particulate exposure by ~${percentageCut}%`;
+      if (co2Saved !== null && co2Saved > 0) {
+        verdict += ` and prevents ${co2Saved} kg of tailpipe CO₂ emissions.`;
+      } else {
+        verdict += `.`;
+      }
     } else {
-      verdict += ` reduces ${memberName}'s inhaled particulate exposure`;
-    }
-    if (co2Saved !== null && co2Saved > 0) {
-      verdict += ` and prevents ${co2Saved} kg of tailpipe CO₂ emissions.`;
-    } else {
-      verdict += `.`;
+      if (co2Saved !== null && co2Saved > 0) {
+        verdict += ` prevents ${co2Saved} kg of tailpipe CO₂ emissions with comparable particulate exposure.`;
+      } else {
+        verdict += ` maintains comparable particulate exposure.`;
+      }
     }
 
     return {
@@ -211,9 +215,9 @@ export function computeSimulationScenario(
 
     let verdict = `Shifting moderate exercise indoors`;
     if (percentageCut !== null && avoidedUg !== null) {
-      verdict += ` cuts ${memberName}'s inhaled particulate exposure by ~${percentageCut}% during peak pollution hours, shielding sensitive airways.`;
+      verdict += ` cuts ${memberName}'s inhaled particulate exposure by ~${percentageCut}% during peak pollution hours, protecting lungs and breathing.`;
     } else {
-      verdict += ` reduces ${memberName}'s inhaled particulate exposure during peak pollution hours, shielding sensitive airways.`;
+      verdict += ` reduces ${memberName}'s inhaled particulate exposure during peak pollution hours, protecting lungs and breathing.`;
     }
 
     return {
@@ -274,17 +278,17 @@ export function computeSimulationScenario(
 
   let verdict = `Keeping windows sealed`;
   if (profile.hasPurifier) verdict += ' and running air filtration';
-  if (percentageCut !== null && avoidedUg !== null) {
+  if (percentageCut !== null && avoidedUg !== null && percentageCut > 0) {
     verdict += ` cuts ${memberName}'s inhaled exposure by ~${percentageCut}% compared to outdoor infiltration.`;
   } else {
-    verdict += ` prevents particulate infiltration while outdoor dispersion remains sluggish.`;
+    verdict += ` prevents particulate infiltration during peak hours.`;
   }
 
   return {
     activityLabel: 'Home Ventilation & Air Cleaning',
     durationLabel: `${selections.timeSlot} – ${endTime} (60 mins)`,
     baseline: {
-      title: 'Open Windows during Inversion Peak',
+      title: 'Open Windows during Peak Pollution',
       envLabel: 'Outdoor Air Infiltration',
       maskLabel: 'Unfiltered Room',
       inhaledUg: baselineInhaled !== null ? Math.round(baselineInhaled) : null,

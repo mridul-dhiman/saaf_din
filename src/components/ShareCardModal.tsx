@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../i18n';
 import { Profile } from '../types';
 
 interface ShareCardModalProps {
@@ -18,6 +19,7 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
   completedActionsCount,
   onClose,
 }) => {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   const shareText = `🌿 Today my household in ${profile.location.name} avoided ${pm25AvoidedUg} µg of PM2.5 and saved ${co2SavedKg} kg of CO2 (${cigarettesAvoided} cigarettes avoided) by following optimized clean routines on SaafDin! Check your exposure: https://saaf-din.web.app`;
@@ -53,7 +55,7 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-secondary text-[22px]">share</span>
             <h3 className="font-headline-sm text-[17px] text-on-surface font-bold">
-              Share Your Daily Impact
+              {t.shareCard.title}
             </h3>
           </div>
           <button
@@ -72,10 +74,10 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
           <div className="flex items-center justify-between relative z-10">
             <div className="flex flex-col">
               <span className="font-headline-sm text-[20px] font-bold text-white tracking-tight">
-                SaafDin
+                {t.appName}
               </span>
               <span className="font-label-sm text-[10px] text-primary-fixed uppercase tracking-wider font-semibold">
-                Today's clean air impact
+                {t.today.todaysImpact}
               </span>
             </div>
             <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-primary-fixed font-label-sm text-[11px] font-bold">
@@ -90,7 +92,7 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
                 {pm25AvoidedUg} µg
               </span>
               <span className="text-[10px] text-primary-fixed mt-0.5 leading-tight">
-                PM2.5 Avoided
+                {t.today.pm25Avoided}
               </span>
             </div>
 
@@ -99,7 +101,7 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
                 {co2SavedKg} kg
               </span>
               <span className="text-[10px] text-primary-fixed mt-0.5 leading-tight">
-                CO₂ Saved
+                {t.today.co2Saved}
               </span>
             </div>
 
@@ -108,13 +110,13 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
                 {cigarettesAvoided}
               </span>
               <span className="text-[10px] text-primary-fixed mt-0.5 leading-tight">
-                Cigarettes
+                {t.today.cigsAvoided}
               </span>
             </div>
           </div>
 
           <div className="text-[11px] text-primary-fixed/80 border-t border-primary-container/60 pt-2 relative z-10 flex items-center justify-between">
-            <span>{completedActionsCount} clean routine actions taken today</span>
+            <span>{completedActionsCount} {t.today.actionsDone}</span>
             <span className="font-semibold text-white">saaf-din.web.app</span>
           </div>
         </div>
@@ -128,7 +130,7 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
           <span className="material-symbols-outlined text-[18px]">
             {copied ? 'check' : 'ios_share'}
           </span>
-          <span>{copied ? 'Copied to Clipboard! ✓' : 'Share or Copy Card'}</span>
+          <span>{copied ? `${t.shareCard.copied} ✓` : t.shareCard.copyLink}</span>
         </button>
       </div>
     </div>

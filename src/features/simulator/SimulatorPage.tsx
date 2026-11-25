@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useProfile } from '../../context/ProfileContext';
+import { useLanguage } from '../../i18n';
 import { currentForecastProvider } from '../../services/forecast';
 import { HourlyForecastPoint } from '../../types';
 import { computeSimulationScenario, ScenarioActivity } from '../../lib/impact';
@@ -7,6 +8,7 @@ import { ReceiptModal } from '../../components/ReceiptModal';
 
 export const SimulatorPage: React.FC = () => {
   const { profile } = useProfile();
+  const { t } = useLanguage();
   const [forecastPoints, setForecastPoints] = useState<HourlyForecastPoint[]>([]);
 
   // Selectors State
@@ -37,7 +39,7 @@ export const SimulatorPage: React.FC = () => {
   }, [profile, forecastPoints, activity, timeSlot, selectedMemberId]);
 
   return (
-    <div className="flex flex-col gap-space-lg w-full pb-16">
+    <div className="flex flex-col gap-space-lg w-full pb-32 lg:pb-16">
       {/* Top Header Card */}
       <div className="bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-surface-container flex flex-col gap-space-sm">
         <div className="flex items-center gap-space-sm">
@@ -46,10 +48,10 @@ export const SimulatorPage: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <h1 className="font-headline-md text-headline-sm lg:text-headline-md text-on-surface font-bold">
-              What-If Decision Simulator
+              {t.simulator.title}
             </h1>
             <span className="font-body-sm text-body-sm text-on-surface-variant">
-              Model personal exposure and emission differences between routine choices
+              {t.simulator.subtitle}
             </span>
           </div>
         </div>
@@ -159,7 +161,7 @@ export const SimulatorPage: React.FC = () => {
             <div className="flex flex-col gap-space-sm">
               <div className="flex items-baseline justify-between">
                 <span className="font-label-md text-label-md text-on-surface-variant font-medium">
-                  Inhaled PM2.5 Exposure
+                  {t.simulator.inhaledDose}
                 </span>
                 <span className="font-headline-sm text-headline-sm text-error font-bold">
                   {simulationResults.baseline.inhaledUg !== null ? `${simulationResults.baseline.inhaledUg} µg` : ''}
@@ -200,7 +202,7 @@ export const SimulatorPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-headline-sm text-[17px] text-on-surface font-bold">
-                    Clean Alternative
+                    {t.simulator.alternativeScenario}
                   </h3>
                   <span className="font-label-sm text-[11px] text-secondary font-semibold">
                     Target Routine Choice
@@ -232,7 +234,7 @@ export const SimulatorPage: React.FC = () => {
             <div className="flex flex-col gap-space-sm">
               <div className="flex items-baseline justify-between">
                 <span className="font-label-md text-label-md text-on-surface-variant font-medium">
-                  Inhaled PM2.5 Exposure
+                  {t.simulator.inhaledDose}
                 </span>
                 <span className="font-headline-sm text-headline-sm text-primary font-bold">
                   {simulationResults.alternative.inhaledUg !== null ? `${simulationResults.alternative.inhaledUg} µg` : ''}
@@ -268,7 +270,7 @@ export const SimulatorPage: React.FC = () => {
       <div className="bg-primary text-on-primary rounded-2xl p-space-md lg:p-space-lg shadow-xl flex flex-col md:flex-row items-center justify-between gap-space-md">
         <div className="flex items-start gap-space-sm">
           <div className="w-11 h-11 rounded-xl bg-primary-container text-secondary-fixed flex items-center justify-center shrink-0 mt-0.5">
-            <span className="material-symbols-outlined text-[24px]">verified</span>
+            <span className="material-symbols-outlined text-[24px]">insights</span>
           </div>
           <div className="flex flex-col">
             <span className="font-label-md text-label-md text-primary-fixed uppercase tracking-wider font-semibold">

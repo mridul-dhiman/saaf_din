@@ -37,6 +37,14 @@ function addHoursToTime(startStr: string, durationHours: number): string {
   return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
 }
 
+function addMinutes(startStr: string, minutes: number): string {
+  const [h, m] = startStr.split(':').map(Number);
+  const totalMinutes = Math.round(h * 60 + m + minutes);
+  const endH = Math.floor(totalMinutes / 60) % 24;
+  const endM = totalMinutes % 60;
+  return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+}
+
 /**
  * Pure evaluation and profile-filtering for the habit alternatives catalogue.
  * Strictly adheres to IMPACT_MODEL.md and HANDOFF.md specifications:
@@ -147,10 +155,67 @@ export function scoreAndFilterSwaps(
 
   // 2. Child School Run Swap
   // Filter out if no child in household
-  // The profile currently has no school-run time. Until onboarding captures a school run (Phase 5),
-  // show the school-run swap with its benefit line and no figures.
+  // When onboarding captures a school run (profile.schoolRun), quantify using two_wheeler -> metro pair, no N95 in alternative.
   const childMember = profile.members.find((m) => m.ageGroup === 'child');
   if (childMember) {
+    let exposureAvoidedUg: number | null = null;
+    let co2SavedKg: number | null = null;
+    let cigs: number | null = null;
+    let baselineEffectiveSlices: EffectiveSlice[] | undefined = undefined;
+    let altEffectiveSlices: EffectiveSlice[] | undefined = undefined;
+
+    if (profile.schoolRun && profile.schoolRun.time && profile.schoolRun.distanceKm > 0) {
+      const departs = profile.schoolRun.time;
+      const distanceKm = profile.schoolRun.distanceKm;
+      const baseSpeed = URBAN_SPEEDS_KMH['two_wheeler'];
+      const targetSpeed = URBAN_SPEEDS_KMH['metro'];
+
+      const baseDurationMin = Math.round((distanceKm / baseSpeed) * 60);
+      const targetDurationMin = Math.round((distanceKm / targetSpeed) * 60);
+
+      const baseEnd = addMinutes(departs, baseDurationMin);
+      const targetEnd = addMinutes(departs, targetDurationMin);
+
+      const baseSlices = getTimeSlices(departs, baseEnd);
+      const targetSlices = getTimeSlices(departs, targetEnd);
+
+      const baseFenv = ENV_FACTORS['two_wheeler'];
+      const targetFenv = ENV_FACTORS['metro'];
+      const fMask = MASK_FACTORS['none'];
+
+      const baselineInhaled = calcInhaledUg(baseSlices, getHourlyPm25, {
+        ageGroup: childMember.ageGroup,
+        intensity: 'light',
+        env: 'two_wheeler',
+        mask: 'none',
+      });
+
+      const altInhaled = calcInhaledUg(targetSlices, getHourlyPm25, {
+        ageGroup: childMember.ageGroup,
+        intensity: 'light',
+        env: 'metro',
+        mask: 'none',
+      });
+
+      exposureAvoidedUg = calcExposureAvoided(baselineInhaled, altInhaled);
+      co2SavedKg = calcTravelCo2SavedKg('two_wheeler', 'metro', distanceKm);
+
+      baselineEffectiveSlices = baseSlices.map((s) => ({
+        hour: s.hour,
+        fraction: s.fraction,
+        fEnv: baseFenv,
+        fMask,
+      }));
+      altEffectiveSlices = targetSlices.map((s) => ({
+        hour: s.hour,
+        fraction: s.fraction,
+        fEnv: targetFenv,
+        fMask,
+      }));
+
+      cigs = calcActionCigarettesAvoided(baselineEffectiveSlices, altEffectiveSlices, getHourlyPm25);
+    }
+
     swaps.push({
       id: 'swap_school_run',
       title: 'Child Morning School Run',
@@ -160,9 +225,11 @@ export function scoreAndFilterSwaps(
       fromHabit: `Open-air two-wheeler or auto-rickshaw during rush hour for ${childMember.name}`,
       toHabit: 'Shared electric school shuttle or Metro coach',
       daysPerWeek: WEEKLY_COMMUTE_DAYS,
-      exposureAvoidedUg: null,
-      co2SavedKg: null,
-      cigarettesAvoided: null,
+      exposureAvoidedUg,
+      co2SavedKg,
+      cigarettesAvoided: cigs,
+      baselineSlices: baselineEffectiveSlices,
+      alternativeSlices: altEffectiveSlices,
       specialBenefit: 'Shields developing lungs from direct roadside tailpipe emissions',
       isApplicable: true,
     });
