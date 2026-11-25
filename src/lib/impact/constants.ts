@@ -127,6 +127,53 @@ export const URBAN_SPEEDS_KMH: Record<TravelMode, number> = {
 export const SCHOOL_RUN_DISTANCE_KM = 6;
 
 /**
+ * Travel mode to environment factor mapping
+ * Source: assumption
+ */
+export const MODE_TO_ENV: Record<TravelMode, EnvFactorKey> = {
+  walk: 'outdoors',
+  cycle: 'outdoors',
+  two_wheeler: 'two_wheeler', // F_env = 1.0 (open)
+  auto_cng: 'auto_rickshaw',  // F_env = 1.0 (open)
+  car_petrol: 'car_closed_recirc',
+  car_diesel: 'car_closed_recirc',
+  car_cng: 'car_closed_recirc',
+  car_ev: 'car_closed_recirc',
+  carpool: 'car_closed_recirc',
+  bus: 'bus',
+  metro: 'metro',
+};
+
+/**
+ * Travel mode to activity intensity mapping
+ */
+export const MODE_TO_INTENSITY: Record<TravelMode, Intensity> = {
+  walk: 'moderate',
+  cycle: 'moderate',
+  two_wheeler: 'light',
+  auto_cng: 'light',
+  car_petrol: 'light',
+  car_diesel: 'light',
+  car_cng: 'light',
+  car_ev: 'light',
+  carpool: 'light',
+  bus: 'light',
+  metro: 'light',
+};
+
+/**
+ * Nominal domestic air purifier electric power consumption (Watts)
+ * Source: assumption, not verified (typical domestic HEPA purifier on medium fan speed)
+ */
+export const PURIFIER_WATTS = 45;
+
+/**
+ * Grid electricity emission intensity for India (kg CO2 per kWh)
+ * Source: assumption, not verified (Central Electricity Authority CO2 baseline database ~0.7-0.8 kg/kWh)
+ */
+export const GRID_KG_CO2_PER_KWH = 0.7;
+
+/**
  * Standard weekly frequencies for habit alternatives
  */
 export const WEEKLY_COMMUTE_DAYS = 5;

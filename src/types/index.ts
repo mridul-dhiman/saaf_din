@@ -85,19 +85,42 @@ export interface EffectiveSlice {
   fMask: number;
 }
 
+export interface MemberExposureBreakdown {
+  memberId: string;
+  memberName: string;
+  ageGroup: string;
+  ir: number;
+  baselineInhaledUg: number | null;
+  altInhaledUg: number | null;
+  avoidedUg: number | null;
+}
+
+export interface ActionCalculationBreakdown {
+  durationHours: number;
+  hoursUsed: number[];
+  hourlyPm25: { hour: number; pm2_5: number | null }[];
+  fEnvBase: number;
+  fEnvAlt: number;
+  fMaskBase: number;
+  fMaskAlt: number;
+  ir?: number;
+  baselineTotalUg: number | null;
+  alternativeTotalUg: number | null;
+  distanceKm?: number;
+  efBase?: number;
+  efAlt?: number;
+  co2CostKg?: number;
+  isHousehold?: boolean;
+  memberBreakdown?: MemberExposureBreakdown[];
+}
+
 export interface ImpactReceipt {
   exposureAvoidedUg: number | null;
   co2SavedKg: number | null;
   baselineSlices?: EffectiveSlice[];
   alternativeSlices?: EffectiveSlice[];
   explanation?: string;
-  calculationBreakdown?: {
-    baselineExposureUg?: number;
-    alternativeExposureUg?: number;
-    baselineCo2Kg?: number;
-    alternativeCo2Kg?: number;
-    formula?: string;
-  };
+  calculationBreakdown?: ActionCalculationBreakdown;
 }
 
 export interface HourlyForecastPoint {

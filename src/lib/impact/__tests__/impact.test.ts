@@ -12,10 +12,19 @@ import {
   calcTotalCigarettesAvoided,
   formatCigarettes,
 } from '../cigarettes';
-import { MASK_FACTORS, EMISSION_FACTORS } from '../constants';
+import {
+  ENV_FACTORS,
+  MASK_FACTORS,
+  EMISSION_FACTORS,
+  PURIFIER_WATTS,
+  GRID_KG_CO2_PER_KWH,
+  MODE_TO_ENV,
+} from '../constants';
 import { computeActionImpact } from '../actionImpact';
 import { scoreAndFilterSwaps } from '../swaps';
 import { computeSimulationScenario } from '../simulator';
+import { generateRuleBasedPlan, intervalsOverlap } from '../rulePlanner';
+import { DayWindowsResult } from '../../aqi';
 import { Profile, PlannedAction, HourlyForecastPoint } from '../../../types';
 
 const MOCK_PROFILE: Profile = {
@@ -570,5 +579,225 @@ describe('Phase 2: Swaps and Simulator Impact Model Tests', () => {
     // Verdict must NOT contain any "%" or "µg"
     expect(res.verdict).not.toContain('%');
     expect(res.verdict).not.toContain('µg');
+  });
+
+  // Phase 4 Tests
+  describe('Phase 4 Implementation Audit Tests', () => {
+    it('Household action (memberId: null) sums exposure avoided across all members with distinct age groups', () => {
+      const multiMemberProfile: Profile = {
+        ...MOCK_PROFILE,
+        members: [
+          { id: 'm_adult', name: 'Adult M', ageGroup: 'adult', sensitivities: [] },
+          { id: 'm_child', name: 'Child M', ageGroup: 'child', sensitivities: ['child'] },
+          { id: 'm_elderly', name: 'Elderly M', ageGroup: 'elderly', sensitivities: ['elderly'] },
+        ],
+      };
+
+      const points100 = points24h.map((p) => ({ ...p, pm2_5: 100 }));
+      const lookup = makePm25Lookup(points100);
+
+      const householdAction: PlannedAction = {
+        id: 'act_purifier_all',
+        type: 'run_purifier',
+        memberId: null,
+        start: '10:00',
+        end: '12:00',
+        title: 'Run purifier for family',
+        reason: 'Cleans air indoors',
+        params: {},
+        completed: false,
+      };
+
+      const res = computeActionImpact(householdAction, multiMemberProfile, lookup);
+      expect(res.calculationBreakdown?.isHousehold).toBe(true);
+      expect(res.calculationBreakdown?.memberBreakdown).toHaveLength(3);
+
+      // Verify each member's avoided exposure is summed into the total
+      const memberBreakdown = res.calculationBreakdown!.memberBreakdown!;
+      const manualSum = memberBreakdown.reduce((acc, mb) => acc + (mb.avoidedUg ?? 0), 0);
+      expect(res.exposureAvoidedUg).toBe(manualSum);
+
+      // Verify individual members have correct ageGroup and non-null values
+      expect(memberBreakdown.find((m) => m.memberId === 'm_child')?.ageGroup).toBe('child');
+      expect(memberBreakdown.find((m) => m.memberId === 'm_adult')?.ageGroup).toBe('adult');
+      expect(memberBreakdown.find((m) => m.memberId === 'm_elderly')?.ageGroup).toBe('elderly');
+    });
+
+    it('Purifier computes electricity CO2 cost in calculationBreakdown without showing a CO2 saved pill', () => {
+      const points100 = points24h.map((p) => ({ ...p, pm2_5: 100 }));
+      const lookup = makePm25Lookup(points100);
+
+      const purifierAction: PlannedAction = {
+        id: 'act_purifier_cost',
+        type: 'run_purifier',
+        memberId: null,
+        start: '10:00',
+        end: '13:00', // 3 hours
+        title: 'Run purifier',
+        reason: 'Air filtration',
+        params: {},
+        completed: false,
+      };
+
+      const res = computeActionImpact(purifierAction, MOCK_PROFILE, lookup);
+      // co2SavedKg must be null (purifier consumes energy, does not save transport CO2)
+      expect(res.co2SavedKg).toBeNull();
+
+      // Calculation breakdown should record electrical CO2 cost
+      // 3 hours * 45W = 135 Wh = 0.135 kWh. 0.135 * 0.7 kg/kWh = 0.0945 kg CO2 -> 0.09
+      const expectedCost = Number(((PURIFIER_WATTS * 3 / 1000) * GRID_KG_CO2_PER_KWH).toFixed(2));
+      expect(res.calculationBreakdown?.co2CostKg).toBe(expectedCost);
+    });
+
+    it('MODE_TO_ENV correctly maps modes and action calculationBreakdown contains full audit parameters', () => {
+      expect(MODE_TO_ENV.two_wheeler).toBe('two_wheeler');
+      expect(MODE_TO_ENV.auto_cng).toBe('auto_rickshaw');
+      expect(MODE_TO_ENV.car_petrol).toBe('car_closed_recirc');
+      expect(MODE_TO_ENV.metro).toBe('metro');
+
+      const points100 = points24h.map((p) => ({ ...p, pm2_5: 100 }));
+      const lookup = makePm25Lookup(points100);
+
+      const commuteAction: PlannedAction = {
+        id: 'act_commute_mode',
+        type: 'change_commute_mode',
+        memberId: 'm1',
+        start: '08:30',
+        end: '09:30',
+        title: 'Take Metro Rail instead of driving',
+        reason: 'Cuts transport emissions',
+        params: {
+          baselineMode: 'car_petrol',
+          targetMode: 'metro',
+          distanceKm: 18,
+        },
+        completed: false,
+      };
+
+      const resCar = computeActionImpact(commuteAction, MOCK_PROFILE, lookup);
+      // Car to metro saves CO2 but has no exposure gain (F_env 0.3 -> 0.4), so exposureAvoidedUg is null
+      expect(resCar.co2SavedKg).toBeGreaterThan(0);
+      expect(resCar.exposureAvoidedUg).toBeNull();
+
+      // Two-wheeler to metro saves both CO2 and substantial exposure (F_env 1.0 -> 0.4)
+      const bikeAction: PlannedAction = {
+        ...commuteAction,
+        id: 'act_bike_metro',
+        params: {
+          baselineMode: 'two_wheeler',
+          targetMode: 'metro',
+          distanceKm: 18,
+        },
+      };
+      const resBike = computeActionImpact(bikeAction, MOCK_PROFILE, lookup);
+      expect(resBike.co2SavedKg).toBeGreaterThan(0);
+      expect(resBike.exposureAvoidedUg).toBeGreaterThan(0);
+
+      // Verify audit fields
+      const cb = resCar.calculationBreakdown;
+      expect(cb).toBeDefined();
+      expect(cb?.distanceKm).toBe(18);
+      expect(cb?.efBase).toBe(EMISSION_FACTORS.car_petrol);
+      expect(cb?.efAlt).toBe(EMISSION_FACTORS.metro);
+      expect(cb?.fEnvBase).toBe(ENV_FACTORS.car_closed_recirc); // 0.4
+      expect(cb?.fEnvAlt).toBe(ENV_FACTORS.metro);             // 0.5
+      expect(cb?.hourlyPm25.length).toBeGreaterThan(0);
+    });
+
+    it('Rule-based plan actions all have completed: false, follow forecast windows, and contain no member overlaps', () => {
+      const profileWithRoutine: Profile = {
+        ...MOCK_PROFILE,
+        members: [
+          {
+            id: 'm1',
+            name: 'Arjun',
+            ageGroup: 'adult',
+            sensitivities: [],
+            routine: {
+              label: 'Evening Jog',
+              start: '18:30',
+              end: '19:15',
+              outdoors: true,
+              intensity: 'vigorous',
+            },
+          },
+        ],
+      };
+
+      const mockWindows: DayWindowsResult = {
+        canVentilateToday: true,
+        bestWindow: {
+          startHour: 13,
+          endHour: 16,
+          startTime: '13:00',
+          endTime: '16:00',
+          meanPm25: 45,
+          durationHours: 3,
+          isVentilationRecommended: true,
+        },
+        worstWindow: {
+          startHour: 8,
+          endHour: 10,
+          startTime: '08:00',
+          endTime: '10:00',
+          meanPm25: 310,
+          durationHours: 2,
+          isVentilationRecommended: false,
+        },
+        advisory: 'Optimal ventilation between 13:00 and 16:00.',
+      };
+
+      const actions = generateRuleBasedPlan(profileWithRoutine, points24h, mockWindows);
+
+      // Rule: Every single action must have completed: false
+      for (const act of actions) {
+        expect(act.completed).toBe(false);
+      }
+
+      // Rule: Ventilate action uses bestWindow times
+      const ventAct = actions.find((a) => a.type === 'ventilate');
+      expect(ventAct).toBeDefined();
+      expect(ventAct?.start).toBe('13:00');
+      expect(ventAct?.end).toBe('16:00');
+
+      // Rule: Peak filtration uses worstWindow times
+      const purifierAct = actions.find((a) => a.type === 'run_purifier');
+      expect(purifierAct).toBeDefined();
+      expect(purifierAct?.start).toBe('08:00');
+      expect(purifierAct?.end).toBe('10:00');
+
+      // Rule: Routine action uses profile routine times
+      const routineAct = actions.find((a) => a.type === 'move_activity_indoors');
+      expect(routineAct).toBeDefined();
+      expect(routineAct?.start).toBe('18:30');
+      expect(routineAct?.end).toBe('19:15');
+
+      // Rule: De-duplication - Never emit overlapping actions for the same member
+      const memberActions = actions.filter((a) => a.memberId === 'm1');
+      for (let i = 0; i < memberActions.length; i++) {
+        for (let j = i + 1; j < memberActions.length; j++) {
+          const a1 = memberActions[i];
+          const a2 = memberActions[j];
+          const overlaps = intervalsOverlap(a1.start, a1.end, a2.start, a2.end);
+          expect(overlaps).toBe(false);
+        }
+      }
+
+      // Rule: Plain language only (no technical jargon)
+      const bannedTokens = [
+        'ground ozone spike',
+        'deep lung penetration',
+        'cardiovascular baseline',
+        'ultra-fine oil aerosols',
+        'soot',
+        'inversion',
+      ];
+      for (const act of actions) {
+        for (const token of bannedTokens) {
+          expect(act.reason.toLowerCase()).not.toContain(token.toLowerCase());
+          expect(act.title.toLowerCase()).not.toContain(token.toLowerCase());
+        }
+      }
+    });
   });
 });

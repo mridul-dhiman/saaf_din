@@ -172,6 +172,33 @@ export const TodayPage: React.FC = () => {
     return Number(sum.toFixed(1));
   }, [qualifyingActions]);
 
+  // Per-member exposure avoided subtotal from qualifying completed actions
+  const memberSubtotals = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const m of profile.members) {
+      map[m.id] = 0;
+    }
+
+    for (const act of qualifyingActions) {
+      if (act.memberId !== null) {
+        if (act.impact.exposureAvoidedUg !== null && map[act.memberId] !== undefined) {
+          map[act.memberId] += act.impact.exposureAvoidedUg;
+        }
+      } else {
+        // Household action: distribute using memberBreakdown from calculationAudit
+        const mb = act.impact.calculationBreakdown?.memberBreakdown;
+        if (mb) {
+          for (const item of mb) {
+            if (item.avoidedUg !== null && map[item.memberId] !== undefined) {
+              map[item.memberId] += item.avoidedUg;
+            }
+          }
+        }
+      }
+    }
+    return map;
+  }, [profile.members, qualifyingActions]);
+
   // Cigarette equivalents avoided today (Berkeley Earth: 22 µg/m³ * 24h = 1 cig)
   const approxCigarettesAvoided = useMemo(() => {
     if (!forecast || qualifyingActions.length === 0) return null;
@@ -479,6 +506,11 @@ export const TodayPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 flex-wrap justify-end">
+                        {memberSubtotals[member.id] > 0 && (
+                          <span className="font-label-sm text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold">
+                            {memberSubtotals[member.id]} µg avoided
+                          </span>
+                        )}
                         {member.sensitivities.map((s) => (
                           <span
                             key={s}

@@ -8,6 +8,7 @@ export interface TranslationDictionary {
     roomScan: string;
     assistant: string;
     profile: string;
+    howCalculated: string;
   };
   banner: {
     usAqi: string;

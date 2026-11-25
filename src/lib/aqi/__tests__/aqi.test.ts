@@ -106,4 +106,52 @@ describe('AQI & Ventilation Windows Tests (IMPACT_MODEL.md Section 5 & 7)', () =
     expect(result.canVentilateToday).toBe(false);
     expect(result.advisory).toBe('');
   });
+
+  // Phase 4: No 3-hour cap on window search
+  it('Phase 4: finds contiguous clean window of length > 3 hours without cap (e.g. 4-hour window)', () => {
+    // Hours 12, 13, 14, 15 have 40 µg/m³; all other hours are 250 µg/m³
+    const series: ForecastHour[] = [];
+    for (let h = 0; h < 24; h++) {
+      series.push({
+        hour: h,
+        pm2_5: h >= 12 && h < 16 ? 40 : 250,
+      });
+    }
+
+    const result = findBestAndWorstWindows(series);
+    expect(result.bestWindow).not.toBeNull();
+    expect(result.bestWindow?.startHour).toBe(12);
+    expect(result.bestWindow?.endHour).toBe(16);
+    expect(result.bestWindow?.durationHours).toBe(4);
+    expect(result.bestWindow?.meanPm25).toBe(40);
+  });
+
+  // Phase 4: Window search never crosses 22:00 or across calendar dates
+  it('Phase 4: window search never crosses 22:00 and restricts to single calendar date', () => {
+    // Series spanning two days: day 1 hours 18..23, day 2 hours 00..10
+    const series: ForecastHour[] = [];
+    for (let h = 18; h < 24; h++) {
+      series.push({
+        hour: h,
+        time: `2026-11-25T${String(h).padStart(2, '0')}:00`,
+        pm2_5: h >= 21 ? 30 : 200, // hours 21, 22, 23 are clean
+      });
+    }
+    for (let h = 0; h < 12; h++) {
+      series.push({
+        hour: h,
+        time: `2026-11-26T${String(h).padStart(2, '0')}:00`,
+        pm2_5: 25, // day 2 is clean
+      });
+    }
+
+    const result = findBestAndWorstWindows(series);
+    // Because target calendar date is 2026-11-25, and hours must end at or before 22:00:
+    // Only daytime hours on 2026-11-25 with h < 22 are eligible (18, 19, 20, 21)
+    if (result.bestWindow) {
+      expect(result.bestWindow.endHour).toBeLessThanOrEqual(22);
+    }
+    // And hours from 2026-11-26 were not mixed into day 1's window
+    expect(result.bestWindow?.startHour).toBeGreaterThanOrEqual(18);
+  });
 });

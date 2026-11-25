@@ -21,6 +21,7 @@ export const Shell: React.FC = () => {
     { path: '/simulator', label: t.nav.simulator, icon: 'tune', mobileIcon: 'tune' },
     { path: '/room-scan', label: t.nav.roomScan, icon: 'document_scanner', mobileIcon: 'document_scanner' },
     { path: '/assistant', label: t.nav.assistant, icon: 'forum', mobileIcon: 'chat_bubble' },
+    { path: '/how-we-calculate', label: t.nav.howCalculated, icon: 'calculate', mobileIcon: 'calculate', desktopOnly: true },
     { path: '/onboarding', label: t.nav.profile, icon: 'person', mobileIcon: 'person', desktopOnly: true },
   ];
 

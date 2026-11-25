@@ -10,6 +10,7 @@ export const en: TranslationDictionary = {
     roomScan: 'Room Scan',
     assistant: 'Assistant',
     profile: 'Profile',
+    howCalculated: 'How We Calculate',
   },
   banner: {
     usAqi: 'US AQI',

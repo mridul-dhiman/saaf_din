@@ -2,15 +2,52 @@ import { PlannedAction, Profile, HourlyForecastPoint } from '../../types';
 import { DayWindowsResult } from '../aqi';
 import { computeActionImpact, ActionImpactResult } from './actionImpact';
 import { makePm25Lookup } from './exposure';
+import { URBAN_SPEEDS_KMH } from './constants';
 
 export interface EnrichedAction extends PlannedAction {
   impact: ActionImpactResult;
 }
 
 /**
+ * Adds hours (or fractional hours) to a HH:mm time string.
+ */
+export function addHoursToTime(startStr: string, durationHours: number): string {
+  const [h, m] = startStr.split(':').map(Number);
+  const totalMinutes = Math.round(h * 60 + m + durationHours * 60);
+  const endH = Math.floor(totalMinutes / 60) % 24;
+  const endM = totalMinutes % 60;
+  return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+}
+
+/**
+ * Converts HH:mm string to minutes from midnight.
+ */
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+/**
+ * Checks if two time intervals [start1, end1] and [start2, end2] overlap.
+ */
+export function intervalsOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
+  const s1 = timeToMinutes(start1);
+  const e1 = timeToMinutes(end1);
+  const s2 = timeToMinutes(start2);
+  const e2 = timeToMinutes(end2);
+  return Math.max(s1, s2) < Math.min(e1, e2);
+}
+
+/**
  * Generates a deterministic, rule-based daily air quality action plan.
  * Serves as both the P0 standalone daily plan and the permanent fallback
  * if Gemini model calls fail or validate improperly.
+ *
+ * Rules:
+ * - completed: false for every action (never pre-ticked).
+ * - Times derived strictly from forecast windows and profile commute/routines.
+ * - Plain language only: no technical jargon (soot, inversion, ozone spike, etc.).
+ * - De-duplication: Never emits overlapping actions for the same member.
  */
 export function generateRuleBasedPlan(
   profile: Profile,
@@ -18,185 +55,180 @@ export function generateRuleBasedPlan(
   windows: DayWindowsResult
 ): EnrichedAction[] {
   const getHourlyPm25 = makePm25Lookup(forecastPoints);
+  const candidateActions: PlannedAction[] = [];
 
-  const childMember = profile.members.find((m) => m.ageGroup === 'child');
-  const elderlyMember = profile.members.find((m) => m.ageGroup === 'elderly');
-  const asthmaMember = profile.members.find((m) => m.sensitivities.includes('asthma'));
-  const adultMember = profile.members.find((m) => m.ageGroup === 'adult');
+  const adultMember = profile.members.find((m) => m.ageGroup === 'adult') || profile.members[0];
 
-  const actions: PlannedAction[] = [];
-
-  // Action 1: Morning Commute / School run protection during morning peak
-  if (childMember) {
-    actions.push({
-      id: 'act_morning_mask_child',
-      type: 'wear_mask',
-      memberId: childMember.id,
-      start: '07:30',
-      end: '08:30',
-      title: `Wear N95 mask for ${childMember.name}'s transit`,
-      reason: 'Prevents acute peak morning particulate inhalation during road transfer.',
-      params: { mask: 'n95', intensity: 'light' },
-      completed: true,
-    });
-  } else if (asthmaMember) {
-    actions.push({
-      id: 'act_morning_mask_asthma',
-      type: 'wear_mask',
-      memberId: asthmaMember.id,
-      start: '08:00',
-      end: '09:00',
-      title: `Wear N95 mask outdoors for ${asthmaMember.name}`,
-      reason: 'Reduces airborne trigger exposure during high traffic congestion.',
-      params: { mask: 'n95', intensity: 'light' },
-      completed: true,
-    });
-  } else {
-    actions.push({
-      id: 'act_morning_mask_adult',
-      type: 'wear_mask',
-      memberId: profile.members[0]?.id || null,
-      start: '08:00',
-      end: '09:00',
-      title: 'Wear N95 mask during morning commute',
-      reason: 'Filters heavy morning vehicle soot before dispersion begins.',
-      params: { mask: 'n95', intensity: 'light' },
-      completed: true,
-    });
-  }
-
-  // Action 2: Mid-day indoor filtration during degraded outdoor conditions
-  if (profile.hasPurifier) {
-    actions.push({
-      id: 'act_purifier_boost',
-      type: 'run_purifier',
-      memberId: null,
-      start: '10:00',
-      end: '13:00',
-      title: 'Run air purifier on high speed in living room',
-      reason: 'Maintains low indoor infiltration while outdoor ground smog peaks.',
-      params: { room: 'living_room' },
-      completed: true,
-    });
-  } else {
-    actions.push({
-      id: 'act_keep_closed',
-      type: 'keep_closed',
-      memberId: null,
-      start: '09:00',
-      end: '13:00',
-      title: 'Keep all exterior windows and doors tightly sealed',
-      reason: 'Minimizes infiltration of heavy outdoor particulate pollution.',
-      params: {},
-      completed: true,
-    });
-  }
-
-  // Action 3: Daily Ventilation Strategy
+  // 1. Daily Ventilation Window
   if (windows.canVentilateToday && windows.bestWindow) {
-    actions.push({
+    candidateActions.push({
       id: 'act_ventilate_window',
       type: 'ventilate',
       memberId: null,
       start: windows.bestWindow.startTime,
       end: windows.bestWindow.endTime,
       title: 'Open windows during clean air window',
-      reason: 'Flushes indoor carbon dioxide safely while outdoor PM2.5 is at daily low.',
+      reason: 'Flushes stale indoor air safely while outdoor PM2.5 is at its lowest daily level.',
       params: {
         worstStart: windows.worstWindow?.startTime || '08:00',
         worstEnd: windows.worstWindow?.endTime || '10:00',
       },
       completed: false,
     });
-  } else {
-    actions.push({
-      id: 'act_keep_closed_all_day',
-      type: 'keep_closed',
-      memberId: null,
-      start: '13:00',
-      end: '16:00',
-      title: 'Keep windows sealed throughout the afternoon',
-      reason: 'Outdoor air remains heavily polluted; prioritize indoor air filtration.',
-      params: {},
-      completed: false,
-    });
   }
 
-  // Action 4: Evening Exercise / Routine Shift
-  if (childMember) {
-    actions.push({
-      id: 'act_shift_child_sports',
-      type: 'move_activity_indoors',
-      memberId: childMember.id,
-      start: '17:00',
-      end: '18:30',
-      title: `Move ${childMember.name}'s sports practice indoors`,
-      reason: 'Avoids heavy respiration of roadside dust and evening traffic soot.',
-      params: { intensity: 'vigorous' },
-      completed: false,
-    });
-  } else if (elderlyMember) {
-    actions.push({
-      id: 'act_shift_elderly_walk',
-      type: 'move_activity_indoors',
-      memberId: elderlyMember.id,
-      start: '17:30',
-      end: '18:30',
-      title: `Move ${elderlyMember.name}'s evening walk to indoor corridor`,
-      reason: 'Protects cardiovascular baseline during evening winter inversion.',
-      params: { intensity: 'light' },
-      completed: false,
-    });
-  } else {
-    actions.push({
-      id: 'act_shift_exercise',
-      type: 'move_activity_indoors',
-      memberId: profile.members[0]?.id || null,
-      start: '18:00',
-      end: '19:00',
-      title: 'Exercise indoors with purifier rather than outdoors',
-      reason: 'Prevents deep lung penetration during evening ground ozone spike.',
-      params: { intensity: 'moderate' },
-      completed: false,
-    });
+  // 2. Indoor Air Filtration / Windows Sealed during Peak Hours
+  if (windows.worstWindow) {
+    if (profile.hasPurifier) {
+      candidateActions.push({
+        id: 'act_purifier_peak',
+        type: 'run_purifier',
+        memberId: null,
+        start: windows.worstWindow.startTime,
+        end: windows.worstWindow.endTime,
+        title: 'Run air purifier on high speed in living room',
+        reason: 'Cleans indoor air actively while outdoor pollution is at its daily peak.',
+        params: { room: 'living_room' },
+        completed: false,
+      });
+    } else {
+      candidateActions.push({
+        id: 'act_keep_closed_peak',
+        type: 'keep_closed',
+        memberId: null,
+        start: windows.worstWindow.startTime,
+        end: windows.worstWindow.endTime,
+        title: 'Keep windows and doors sealed tightly',
+        reason: 'Reduces outdoor pollution from leaking indoors while outdoor air quality is poorest.',
+        params: {},
+        completed: false,
+      });
+    }
   }
 
-  // Action 5: Commute mode alternative (if commuting by solo car/bike)
-  if (profile.commute.mode.startsWith('car_') || profile.commute.mode === 'two_wheeler') {
-    actions.push({
-      id: 'act_commute_metro',
-      type: 'change_commute_mode',
-      memberId: adultMember?.id || profile.members[0]?.id || null,
-      start: profile.commute.departs || '08:30',
-      end: '09:30',
-      title: 'Take Metro Rail instead of solo driving',
-      reason: 'Substantially reduces your transit tailpipe exposure and direct transport emissions.',
-      params: {
-        baselineMode: profile.commute.mode,
-        targetMode: 'metro',
-        distanceKm: profile.commute.distanceKm || 18,
-      },
-      completed: false,
-    });
+  // 3. Member Routine Shifts (Exercise / Sports)
+  for (const member of profile.members) {
+    if (member.routine && member.routine.outdoors && member.routine.start && member.routine.end) {
+      candidateActions.push({
+        id: `act_routine_${member.id}`,
+        type: 'move_activity_indoors',
+        memberId: member.id,
+        start: member.routine.start,
+        end: member.routine.end,
+        title: `Move ${member.name}'s ${member.routine.label.toLowerCase()} indoors`,
+        reason: 'Protects heart and lungs from elevated outdoor pollution during physical exertion.',
+        params: { intensity: member.routine.intensity || 'moderate' },
+        completed: false,
+      });
+    }
   }
 
-  // Action 6: Kitchen Exhaust Fan before cooking
+  // 4. Commute Actions (Morning departure and evening return)
+  if (adultMember && profile.commute && profile.commute.departs && profile.commute.returns) {
+    const distanceKm = profile.commute.distanceKm;
+    if (distanceKm > 0) {
+      const mode = profile.commute.mode;
+      const speedKmh = URBAN_SPEEDS_KMH[mode] || 25;
+      const tripDurationHours = Math.max(0.25, distanceKm / speedKmh);
+
+      const morningStart = profile.commute.departs;
+      const morningEnd = addHoursToTime(morningStart, tripDurationHours);
+
+      const eveningStart = profile.commute.returns;
+      const eveningEnd = addHoursToTime(eveningStart, tripDurationHours);
+
+      // Morning Commute Action
+      if (mode.startsWith('car_') || mode === 'two_wheeler') {
+        candidateActions.push({
+          id: 'act_commute_metro',
+          type: 'change_commute_mode',
+          memberId: adultMember.id,
+          start: morningStart,
+          end: morningEnd,
+          title: 'Take Metro Rail instead of driving',
+          reason: 'Reduces vehicle exhaust exposure and cuts direct tailpipe carbon emissions.',
+          params: {
+            baselineMode: mode,
+            targetMode: 'metro',
+            distanceKm,
+          },
+          completed: false,
+        });
+      } else if (['bus', 'two_wheeler', 'walk', 'cycle'].includes(mode)) {
+        candidateActions.push({
+          id: 'act_commute_mask_morning',
+          type: 'wear_mask',
+          memberId: adultMember.id,
+          start: morningStart,
+          end: morningEnd,
+          title: 'Wear N95 mask during morning commute',
+          reason: 'Filters fine particulate matter and vehicle exhaust during transit.',
+          params: { mask: 'n95', intensity: 'light' },
+          completed: false,
+        });
+      }
+
+      // Evening Commute Return Trip Action
+      if (['bus', 'two_wheeler', 'walk', 'cycle'].includes(mode)) {
+        candidateActions.push({
+          id: 'act_commute_mask_evening',
+          type: 'wear_mask',
+          memberId: adultMember.id,
+          start: eveningStart,
+          end: eveningEnd,
+          title: 'Wear N95 mask during evening return trip',
+          reason: 'Protects breathing passages during evening transit congestion.',
+          params: { mask: 'n95', intensity: 'light' },
+          completed: false,
+        });
+      }
+    }
+  }
+
+  // 5. Kitchen Exhaust Fan (Cooking)
   if (profile.hasExhaust) {
-    actions.push({
+    candidateActions.push({
       id: 'act_kitchen_exhaust',
       type: 'use_exhaust_while_cooking',
       memberId: null,
       start: '19:30',
       end: '20:30',
-      title: 'Turn on kitchen exhaust fan before cooking',
-      reason: 'Extracts ultra-fine oil aerosols and unburned combustion gases before dispersal.',
+      title: 'Turn on kitchen exhaust fan while cooking',
+      reason: 'Removes cooking smoke and unburned combustion gases directly at the stove.',
       params: {},
       completed: false,
     });
   }
 
+  // De-duplication: Never emit overlapping actions for the same member
+  const deduplicatedActions: PlannedAction[] = [];
+  for (const candidate of candidateActions) {
+    if (candidate.memberId !== null) {
+      const hasOverlap = deduplicatedActions.some(
+        (a) => a.memberId === candidate.memberId && intervalsOverlap(a.start, a.end, candidate.start, candidate.end)
+      );
+      if (!hasOverlap) {
+        deduplicatedActions.push(candidate);
+      }
+    } else {
+      // For household actions (memberId === null), avoid overlapping identical or conflicting windows
+      const hasOverlap = deduplicatedActions.some(
+        (a) => a.memberId === null && intervalsOverlap(a.start, a.end, candidate.start, candidate.end)
+      );
+      if (!hasOverlap) {
+        deduplicatedActions.push(candidate);
+      }
+    }
+  }
+
+  // Ensure completed is false for every single action
+  const finalActions = deduplicatedActions.map((act) => ({
+    ...act,
+    completed: false,
+  }));
+
   // Compute verifiable receipt for every single action
-  return actions.map((act) => ({
+  return finalActions.map((act) => ({
     ...act,
     impact: computeActionImpact(act, profile, getHourlyPm25),
   }));

@@ -10,6 +10,7 @@ export const hi: TranslationDictionary = {
     roomScan: 'रूम स्कैन',
     assistant: 'सहायक',
     profile: 'प्रोफ़ाइल',
+    howCalculated: 'गणना विधि',
   },
   banner: {
     usAqi: 'यूएस एक्यूआई',

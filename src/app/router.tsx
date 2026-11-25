@@ -6,6 +6,7 @@ import { SwapsPage } from '../features/swaps/SwapsPage';
 import { SimulatorPage } from '../features/simulator/SimulatorPage';
 import { RoomScanPage } from '../features/room-scan/RoomScanPage';
 import { AssistantPage } from '../features/assistant/AssistantPage';
+import { HowWeCalculatePage } from '../features/how-we-calculate/HowWeCalculatePage';
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,10 @@ export const router = createBrowserRouter([
       {
         path: 'assistant',
         element: <AssistantPage />,
+      },
+      {
+        path: 'how-we-calculate',
+        element: <HowWeCalculatePage />,
       },
       {
         path: '*',
