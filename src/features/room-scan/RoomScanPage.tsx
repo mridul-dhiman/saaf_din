@@ -1,19 +1,6 @@
 import React, { useState } from 'react';
-import { getAI, getGenerativeModel, GoogleAIBackend } from 'firebase/ai';
-import { app } from '../../services/firebase';
-
-export interface RoomFinding {
-  id: string;
-  number: number;
-  title: string;
-  issue: string;
-  fix: string;
-  category: 'leak' | 'airflow' | 'source' | 'filtration';
-  impact: 'high' | 'medium' | 'low';
-  cost: 'free' | 'low' | 'medium';
-  point: { x: number; y: number }; // normalized 0-1
-  completed?: boolean;
-}
+import { analyseRoom } from '../../services/gemini';
+import { RoomFinding } from '../../lib/ai';
 
 const SAMPLE_ROOM_IMAGE =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500"><rect width="800" height="500" fill="%23e2e8f0"/><rect x="100" y="80" width="220" height="320" fill="%23cbd5e1" stroke="%2394a3b8" stroke-width="4"/><line x1="210" y1="80" x2="210" y2="400" stroke="%2394a3b8" stroke-width="3"/><rect x="420" y="240" width="300" height="160" rx="16" fill="%2394a3b8"/><rect x="460" y="270" width="220" height="110" rx="10" fill="%2364748b"/><rect x="340" y="310" width="55" height="90" rx="8" fill="%230f766e"/><circle x="367" y="335" r="10" fill="%2314b8a6"/><text x="400" y="460" font-family="sans-serif" font-size="16" fill="%2364748b" text-anchor="middle">Sample Living Room: Balcony sliding door, sofa obstruction, and corner air purifier</text></svg>';
@@ -36,7 +23,7 @@ const DEFAULT_FINDINGS: RoomFinding[] = [
     number: 2,
     title: 'Relocate air purifier away from the sofa obstruction',
     issue: 'Purifier intake is partially blocked by furniture, creating a localized dead-zone in room circulation.',
-    fix: 'Move unit at least 1 meter into open space with unobstructed 360° intake.',
+    fix: 'Move unit at least one meter into open space with unobstructed intake.',
     category: 'airflow',
     impact: 'medium',
     cost: 'free',
@@ -58,12 +45,14 @@ const DEFAULT_FINDINGS: RoomFinding[] = [
 ];
 
 export const RoomScanPage: React.FC = () => {
-  const [stage, setStage] = useState<'upload' | 'analysing' | 'results'>('upload');
+  const [stage, setStage] = useState<'upload' | 'analysing' | 'results' | 'error'>('upload');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [findings, setFindings] = useState<RoomFinding[]>(DEFAULT_FINDINGS);
+  const [findings, setFindings] = useState<RoomFinding[]>([]);
+  const [isSampleResult, setIsSampleResult] = useState<boolean>(false);
   const [activeHighlightId, setActiveHighlightId] = useState<string | null>(null);
+  const [lastUploadedBase64, setLastUploadedBase64] = useState<string | null>(null);
 
-  // Resize client-side to max 1024px
+  // Resize client-side to max 1024px before sending
   const handleFileSelect = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -91,6 +80,8 @@ export const RoomScanPage: React.FC = () => {
 
         const resizedBase64 = canvas.toDataURL('image/jpeg', 0.85);
         setImagePreview(resizedBase64);
+        setLastUploadedBase64(resizedBase64);
+        setIsSampleResult(false);
         runAudit(resizedBase64);
       };
       img.src = e.target?.result as string;
@@ -100,84 +91,24 @@ export const RoomScanPage: React.FC = () => {
 
   const handleUseSample = () => {
     setImagePreview(SAMPLE_ROOM_IMAGE);
-    runAudit(SAMPLE_ROOM_IMAGE);
+    setIsSampleResult(true);
+    setStage('analysing');
+    setTimeout(() => {
+      setFindings(DEFAULT_FINDINGS);
+      setStage('results');
+    }, 600);
   };
 
   const runAudit = async (base64Img: string) => {
     setStage('analysing');
 
-    try {
-      // Attempt Gemini multimodal vision inspection
-      const ai = getAI(app, { backend: new GoogleAIBackend() });
-      const model = getGenerativeModel(ai, {
-        model: 'gemini-1.5-flash',
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.2,
-        },
-        systemInstruction: `You are an expert indoor air quality auditor. Inspect the photo of a room for:
-1. Leak points (gaps around doors, windows, AC wall conduits)
-2. Airflow obstructions (purifiers pushed against walls, blocked vents)
-3. Unvented combustion sources (incense, dhoop, open gas)
-Return a JSON array of up to 3 specific findings.
-Each finding must include:
-- number: 1, 2, or 3
-- title: concise imperative (e.g. "Seal the gap under the balcony door")
-- issue: one clear sentence on what is wrong
-- fix: one practical fix
-- category: leak, airflow, or source
-- impact: high, medium, or low
-- cost: free, low, or medium
-- point: { x: number (0-1), y: number (0-1) } approximate location on image
-Do not invent numeric PM2.5 quantities.`,
-      });
-
-      // Strip data url prefix for inlineData
-      const base64Data = base64Img.split(',')[1] || '';
-      if (base64Data && !base64Img.startsWith('data:image/svg+xml')) {
-        const response = await model.generateContent([
-          {
-            inlineData: {
-              mimeType: 'image/jpeg',
-              data: base64Data,
-            },
-          },
-          'Audit this room for air infiltration leaks and air cleaner placement.',
-        ]);
-
-        const text = response.response.text();
-        const parsed = JSON.parse(text);
-
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const validated: RoomFinding[] = parsed.slice(0, 3).map((item, idx) => ({
-            id: `fix_${idx + 1}`,
-            number: idx + 1,
-            title: item.title || 'Seal perimeter air leak',
-            issue: item.issue || 'Air gap permits outdoor particulate infiltration.',
-            fix: item.fix || 'Apply silicone weatherstripping.',
-            category: item.category || 'leak',
-            impact: item.impact || 'medium',
-            cost: item.cost || 'low',
-            point: {
-              x: Math.min(0.9, Math.max(0.1, item.point?.x ?? 0.5)),
-              y: Math.min(0.9, Math.max(0.1, item.point?.y ?? 0.5)),
-            },
-            completed: false,
-          }));
-          setFindings(validated);
-          setStage('results');
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn('Gemini room audit fallback to verified benchmark audit:', err);
-    }
-
-    // Benchmark sample delay simulation & fallback
-    setTimeout(() => {
-      setFindings(DEFAULT_FINDINGS);
+    const result = await analyseRoom(base64Img);
+    if (result && result.length > 0) {
+      setFindings(result);
       setStage('results');
-    }, 1200);
+    } else {
+      setStage('error');
+    }
   };
 
   const toggleFix = (id: string) => {
@@ -240,7 +171,7 @@ Do not invent numeric PM2.5 quantities.`,
             <button
               type="button"
               onClick={handleUseSample}
-              className="px-4 py-2.5 rounded-xl border border-surface-container bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md font-semibold transition-colors flex items-center gap-1.5"
+              className="px-4 py-2.5 rounded-xl border border-surface-container bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px] text-secondary">image</span>
               <span>Try with Sample Room</span>
@@ -248,7 +179,7 @@ Do not invent numeric PM2.5 quantities.`,
           </div>
 
           <span className="text-[11px] text-outline mt-3">
-            Images are resized in-browser and never stored in Firestore.
+            Images are resized in-browser (max 1024px) and never stored in Firestore.
           </span>
         </div>
       )}
@@ -268,6 +199,44 @@ Do not invent numeric PM2.5 quantities.`,
             <p className="font-body-sm text-body-sm text-on-surface-variant max-w-sm">
               Inspecting door perimeters, window tracks, and air cleaner positions for draft infiltration points.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ERROR STATE WITH RETRY */}
+      {stage === 'error' && (
+        <div className="bg-surface-container-lowest rounded-2xl p-space-xl shadow-sm border border-error/30 flex flex-col items-center justify-center text-center gap-space-md min-h-[400px]">
+          <div className="w-16 h-16 rounded-2xl bg-error-container text-error flex items-center justify-center">
+            <span className="material-symbols-outlined text-[36px]">error_outline</span>
+          </div>
+
+          <div className="flex flex-col gap-1 max-w-md">
+            <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
+              Room Analysis Inconclusive
+            </h2>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">
+              The vision auditor could not clearly identify sealing or airflow features in this image. Please ensure the room is well-lit and shows doors, windows, or purifier placement.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 mt-2">
+            {lastUploadedBase64 && (
+              <button
+                type="button"
+                onClick={() => runAudit(lastUploadedBase64)}
+                className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold hover:bg-primary-container transition-colors cursor-pointer shadow-sm flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">refresh</span>
+                <span>Retry Analysis</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setStage('upload')}
+              className="px-4 py-2.5 rounded-xl border border-surface-container bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md font-semibold transition-colors cursor-pointer"
+            >
+              Upload Different Photo
+            </button>
           </div>
         </div>
       )}
@@ -327,13 +296,20 @@ Do not invent numeric PM2.5 quantities.`,
 
               {/* Reset/Scan another photo */}
               <div className="flex items-center justify-between pt-3 px-1">
-                <span className="text-[12px] text-on-surface-variant font-medium">
-                  {findings.length} visual leak points identified
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] text-on-surface-variant font-medium">
+                    {findings.length} visual leak points identified
+                  </span>
+                  {isSampleResult && (
+                    <span className="px-2 py-0.5 rounded-md bg-secondary/10 text-secondary text-[11px] font-bold">
+                      Example result
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => setStage('upload')}
-                  className="font-label-sm text-label-sm text-secondary hover:underline font-bold"
+                  className="font-label-sm text-label-sm text-secondary hover:underline font-bold cursor-pointer"
                 >
                   Scan Another Room
                 </button>
@@ -341,7 +317,7 @@ Do not invent numeric PM2.5 quantities.`,
             </div>
           </div>
 
-          {/* Right Column (5 cols): Prioritized Fixes matching markers */}
+          {/* Right Column (5 cols): Prioritized Fixes matching markers 1:1 */}
           <div className="lg:col-span-5 flex flex-col gap-space-sm">
             <div className="flex items-center justify-between px-1 mb-1">
               <span className="font-headline-sm text-[17px] text-on-surface font-bold">

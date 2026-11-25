@@ -79,8 +79,26 @@ export const TodayPage: React.FC = () => {
       // ignore
     }
 
+    // Check custom actions added via Assistant
+    let customActions: EnrichedAction[] = [];
+    try {
+      const customSaved = localStorage.getItem(`saafdin_custom_plan_actions_${todayDateStr}`);
+      if (customSaved) {
+        customActions = JSON.parse(customSaved);
+      }
+    } catch (e) {
+      // ignore
+    }
+
     const applyCompletions = (planList: EnrichedAction[]) => {
-      return planList.map((act) => ({
+      const existingIds = new Set(planList.map((a) => a.id));
+      const combined = [...planList];
+      for (const custom of customActions) {
+        if (!existingIds.has(custom.id)) {
+          combined.push(custom);
+        }
+      }
+      return combined.map((act) => ({
         ...act,
         completed: savedCompletion[act.id] !== undefined ? savedCompletion[act.id] : act.completed,
       }));
@@ -88,8 +106,17 @@ export const TodayPage: React.FC = () => {
 
     setActions(applyCompletions(initialPlan));
 
+    // Load adopted swaps to feed into Gemini prompt
+    let adoptedSwapIds: string[] = [];
+    try {
+      const savedSwaps = localStorage.getItem('saafdin_adopted_swaps');
+      if (savedSwaps) adoptedSwapIds = JSON.parse(savedSwaps);
+    } catch (e) {
+      // ignore
+    }
+
     // Then attempt Gemini plan asynchronously
-    generateGeminiPlan(profile, forecast.points, windowsResult)
+    generateGeminiPlan(profile, forecast.points, windowsResult, adoptedSwapIds)
       .then((geminiPlan) => {
         if (active && geminiPlan.length > 0) {
           setActions(applyCompletions(geminiPlan));

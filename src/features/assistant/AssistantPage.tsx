@@ -1,29 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useProfile } from '../../context/ProfileContext';
 import { currentForecastProvider } from '../../services/forecast';
-import { HourlyForecast, ActionType } from '../../types';
+import { HourlyForecast, ActionType, PlannedAction } from '../../types';
 import { findBestAndWorstWindows } from '../../lib/aqi';
-import { getAI, getGenerativeModel, GoogleAIBackend } from 'firebase/ai';
-import { app } from '../../services/firebase';
+import { askAssistant } from '../../services/gemini';
 import { computeActionImpact, ActionImpactResult, makePm25Lookup } from '../../lib/impact';
+
+interface RecommendedActionDisplay {
+  id: string;
+  type: ActionType;
+  title: string;
+  start: string;
+  end: string;
+  memberId: string | null;
+  impact: ActionImpactResult;
+  added?: boolean;
+}
 
 interface ChatMessage {
   id: string;
   sender: 'user' | 'assistant';
   text: string;
   timestamp: string;
-  recommendedAction?: {
-    type: ActionType;
-    title: string;
-    start: string;
-    end: string;
-    memberId: string | null;
-    impact: ActionImpactResult;
-  };
+  recommendedAction?: RecommendedActionDisplay;
 }
 
 export const AssistantPage: React.FC = () => {
-  const { profile } = useProfile();
+  const { profile, setProfile } = useProfile();
   const [forecast, setForecast] = useState<HourlyForecast | null>(null);
   const [inputQuery, setInputQuery] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -32,7 +35,9 @@ export const AssistantPage: React.FC = () => {
     {
       id: 'welcome',
       sender: 'assistant',
-      text: `Hello! I am your clean air assistant. Based on today's forecast for ${profile.location.name}, how can I help protect your household?`,
+      text: profile.language === 'hi'
+        ? `नमस्ते! मैं आपका स्वच्छ वायु सहायक हूँ। ${profile.location.name} के आज के वायु पूर्वानुमान के आधार पर मैं आपकी कैसे मदद कर सकता हूँ?`
+        : `Hello! I am your clean air assistant. Based on today's forecast for ${profile.location.name}, how can I help protect your household?`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -57,12 +62,19 @@ export const AssistantPage: React.FC = () => {
   const child = profile.members.find((m) => m.ageGroup === 'child');
   const elderly = profile.members.find((m) => m.ageGroup === 'elderly');
 
-  const suggestedQuestions = [
-    'When is the best window to ventilate today?',
-    child ? `Should ${child.name} wear an N95 mask to school?` : 'When should I wear an N95 mask outdoors?',
-    elderly ? `Is it safe for ${elderly.name} to walk outside today?` : 'How much exposure do I avoid by staying indoors?',
-    'What is the impact of taking the Metro instead of driving?',
-  ];
+  const suggestedQuestions = profile.language === 'hi'
+    ? [
+        'आज खिड़कियाँ खोलने का सबसे अच्छा समय कब है?',
+        child ? `क्या ${child.name} को स्कूल के लिए N95 मास्क पहनना चाहिए?` : 'मुझे बाहर N95 मास्क कब पहनना चाहिए?',
+        elderly ? `क्या आज ${elderly.name} के लिए बाहर टहलना सुरक्षित है?` : 'घर के अंदर रहकर कितना प्रदूषण बचाया जा सकता है?',
+        'कार के बजाय मेट्रो लेने का क्या प्रभाव है?',
+      ]
+    : [
+        'When is the best window to ventilate today?',
+        child ? `Should ${child.name} wear an N95 mask to school?` : 'When should I wear an N95 mask outdoors?',
+        elderly ? `Is it safe for ${elderly.name} to walk outside today?` : 'How much exposure do I avoid by staying indoors?',
+        'What is the impact of taking the Metro instead of driving?',
+      ];
 
   const handleSend = async (userText: string) => {
     const textToSend = userText.trim();
@@ -80,122 +92,138 @@ export const AssistantPage: React.FC = () => {
     setIsSending(true);
 
     try {
-      const ai = getAI(app, { backend: new GoogleAIBackend() });
-      const model = getGenerativeModel(ai, {
-        model: 'gemini-1.5-flash',
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.3,
-        },
-        systemInstruction: `You are SaafDin, a helpful air quality assistant for Indian households.
-Answer questions grounded in the user's profile and today's atmospheric forecast.
-HARD RULES:
-1. Keep answers concise (2 to 3 sentences max).
-2. DO NOT invent fake sensor readings, vitals, or clinical diagnoses. Refer only to general sensitivities (child, elderly, asthma).
-3. If recommending an action that matches an ActionType (wear_mask, ventilate, keep_closed, run_purifier, move_activity_indoors, change_commute_mode), populate recommendedAction.
-Output JSON format:
-{
-  "replyText": "your concise answer in plain language",
-  "recommendedAction": {
-    "type": "ActionType or null",
-    "title": "short imperative title or null",
-    "start": "HH:00 or null",
-    "end": "HH:00 or null",
-    "memberId": "member ID from profile or null"
-  }
-}`,
-      });
+      const reply = await askAssistant(
+        textToSend,
+        profile,
+        forecast,
+        windowsResult,
+        [] // current plan items
+      );
 
-      const contextPayload = {
-        query: textToSend,
-        profile: {
-          location: profile.location.name,
-          members: profile.members,
-          commute: profile.commute,
-          hasPurifier: profile.hasPurifier,
-        },
-        forecast: {
-          currentAqi: forecast?.points[0]?.us_aqi,
-          currentPm25: forecast?.points[0]?.pm2_5,
-          bestWindow: windowsResult.bestWindow,
-          worstWindow: windowsResult.worstWindow,
-        },
-      };
+      if (reply) {
+        let actionWithImpact: RecommendedActionDisplay | undefined = undefined;
+        if (reply.recommendedAction) {
+          const getHourlyPm25 = forecast ? makePm25Lookup(forecast.points) : () => null;
+          const recAct = reply.recommendedAction;
+          const actId = `chat_rec_${Date.now()}`;
 
-      const response = await model.generateContent(JSON.stringify(contextPayload));
-      const resText = response.response.text();
-      const parsed = JSON.parse(resText);
-
-      let actionWithImpact = undefined;
-      if (parsed.recommendedAction && parsed.recommendedAction.type) {
-        const getHourlyPm25 = forecast ? makePm25Lookup(forecast.points) : () => null;
-
-        const impact = computeActionImpact(
-          {
-            id: `chat_rec_${Date.now()}`,
-            type: parsed.recommendedAction.type,
-            memberId: parsed.recommendedAction.memberId || null,
-            start: parsed.recommendedAction.start || '10:00',
-            end: parsed.recommendedAction.end || '12:00',
-            title: parsed.recommendedAction.title || 'Recommended Action',
+          const planned: PlannedAction = {
+            id: actId,
+            type: recAct.type,
+            memberId: recAct.memberId,
+            start: recAct.start,
+            end: recAct.end,
+            title: recAct.title,
             reason: '',
             params: {},
-          },
-          profile,
-          getHourlyPm25
-        );
+          };
 
-        actionWithImpact = {
-          type: parsed.recommendedAction.type,
-          title: parsed.recommendedAction.title,
-          start: parsed.recommendedAction.start || '10:00',
-          end: parsed.recommendedAction.end || '12:00',
-          memberId: parsed.recommendedAction.memberId || null,
-          impact,
+          const impact = computeActionImpact(planned, profile, getHourlyPm25);
+
+          actionWithImpact = {
+            id: actId,
+            type: recAct.type,
+            title: recAct.title,
+            start: recAct.start,
+            end: recAct.end,
+            memberId: recAct.memberId,
+            impact,
+            added: false,
+          };
+        }
+
+        const botMsg: ChatMessage = {
+          id: `a_${Date.now()}`,
+          sender: 'assistant',
+          text: reply.replyText,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          recommendedAction: actionWithImpact,
         };
+
+        setMessages((prev) => [...prev, botMsg]);
+        return;
       }
-
-      const botMsg: ChatMessage = {
-        id: `a_${Date.now()}`,
-        sender: 'assistant',
-        text: parsed.replyText || 'I recommend following our daily action plan based on today’s forecast.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        recommendedAction: actionWithImpact,
-      };
-
-      setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
-      console.warn('Gemini chat error, falling back to rule-based response:', err);
-
-      // Intelligent deterministic fallback response
-      const currentAqi = forecast?.points[0]?.us_aqi;
-      let fallbackText = currentAqi != null
-        ? `Today in ${profile.location.name}, current US AQI is around ${currentAqi}. `
-        : `Today in ${profile.location.name}. `;
-
-      if (textToSend.toLowerCase().includes('ventilate') || textToSend.toLowerCase().includes('window')) {
-        fallbackText += windowsResult.canVentilateToday && windowsResult.bestWindow
-          ? `The safest ventilation window is between ${windowsResult.bestWindow.startTime} and ${windowsResult.bestWindow.endTime}.`
-          : `Outdoor air quality remains heavily polluted, so it is safer to keep windows sealed.`;
-      } else if (textToSend.toLowerCase().includes('mask')) {
-        fallbackText += `Wearing an N95 respirator significantly reduces inhaled particulate exposure during outdoor transit.`;
-      } else if (textToSend.toLowerCase().includes('metro') || textToSend.toLowerCase().includes('commute')) {
-        fallbackText += `Switching from solo driving to Metro rail avoids tailpipe emissions and reduces in-cabin particulate exposure.`;
-      } else {
-        fallbackText += `I recommend prioritizing indoor air filtration and shifting outdoor exercise away from morning peak traffic.`;
-      }
-
-      const botMsg: ChatMessage = {
-        id: `a_${Date.now()}`,
-        sender: 'assistant',
-        text: fallbackText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-
-      setMessages((prev) => [...prev, botMsg]);
+      console.warn('Gemini chat error, falling back to deterministic response:', err);
     } finally {
       setIsSending(false);
     }
+
+    // Intelligent deterministic fallback response (strictly no invented numbers)
+    const currentAqi = forecast?.points[0]?.us_aqi;
+    let fallbackText = currentAqi != null
+      ? (profile.language === 'hi'
+          ? `आज ${profile.location.name} में US AQI लगभग ${currentAqi} है। `
+          : `Today in ${profile.location.name}, current US AQI is around ${currentAqi}. `)
+      : (profile.language === 'hi' ? `आज ${profile.location.name} में: ` : `Today in ${profile.location.name}: `);
+
+    if (textToSend.toLowerCase().includes('ventilate') || textToSend.toLowerCase().includes('window') || textToSend.includes('खिड़की')) {
+      fallbackText += windowsResult.canVentilateToday && windowsResult.bestWindow
+        ? (profile.language === 'hi'
+            ? `हवादार करने का सबसे सुरक्षित समय ${windowsResult.bestWindow.startTime} से ${windowsResult.bestWindow.endTime} के बीच है।`
+            : `The safest ventilation window is between ${windowsResult.bestWindow.startTime} and ${windowsResult.bestWindow.endTime}.`)
+        : (profile.language === 'hi'
+            ? `बाहरी हवा अत्यधिक प्रदूषित है, इसलिए खिड़कियाँ बंद रखना सुरक्षित है।`
+            : `Outdoor air quality remains heavily polluted, so it is safer to keep windows sealed.`);
+    } else if (textToSend.toLowerCase().includes('mask') || textToSend.includes('मास्क')) {
+      fallbackText += profile.language === 'hi'
+        ? `बाहरी यात्रा के दौरान N95 मास्क पहनने से श्वसन सुरक्षा मिलती है।`
+        : `Wearing an N95 respirator significantly reduces inhaled particulate exposure during outdoor transit.`;
+    } else if (textToSend.toLowerCase().includes('metro') || textToSend.toLowerCase().includes('commute') || textToSend.includes('मेट्रो')) {
+      fallbackText += profile.language === 'hi'
+        ? `निजी वाहन के बजाय मेट्रो से यात्रा करने से उत्सर्जन कम होता है और स्वच्छ हवा मिलती है।`
+        : `Switching from solo driving to Metro rail avoids tailpipe emissions and reduces in-cabin particulate exposure.`;
+    } else {
+      fallbackText += profile.language === 'hi'
+        ? `घर के अंदर वायु निस्पंदन का उपयोग करने और सुबह के व्यस्त समय में बाहरी व्यायाम से बचने की सलाह दी जाती है।`
+        : `I recommend prioritizing indoor air filtration and shifting outdoor exercise away from morning peak traffic.`;
+    }
+
+    const botMsg: ChatMessage = {
+      id: `a_${Date.now()}`,
+      sender: 'assistant',
+      text: fallbackText,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages((prev) => [...prev, botMsg]);
+  };
+
+  const handleAddToPlan = (msgId: string, action: RecommendedActionDisplay) => {
+    // Add to today's plan in localStorage
+    try {
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const listKey = `saafdin_custom_plan_actions_${dateStr}`;
+      const existing = JSON.parse(localStorage.getItem(listKey) || '[]');
+      existing.push({
+        id: action.id,
+        type: action.type,
+        title: action.title,
+        start: action.start,
+        end: action.end,
+        memberId: action.memberId,
+        impact: action.impact,
+      });
+      localStorage.setItem(listKey, JSON.stringify(existing));
+    } catch (e) {
+      console.warn('Failed to add action to plan:', e);
+    }
+
+    // Update message state
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.id === msgId && msg.recommendedAction) {
+          return {
+            ...msg,
+            recommendedAction: {
+              ...msg.recommendedAction,
+              added: true,
+            },
+          };
+        }
+        return msg;
+      })
+    );
   };
 
   return (
@@ -208,15 +236,27 @@ Output JSON format:
           </div>
           <div className="flex flex-col">
             <h1 className="font-headline-sm text-headline-sm text-on-surface font-bold leading-tight">
-              Air Assistant
+              {profile.language === 'hi' ? 'वायु सहायक' : 'Air Assistant'}
             </h1>
             <span className="font-body-sm text-[12px] text-on-surface-variant">
-              Personalized guidance grounded in your family profile &amp; forecast
+              {profile.language === 'hi'
+                ? 'आपके परिवार और वायु पूर्वानुमान पर आधारित व्यक्तिगत मार्गदर्शन'
+                : 'Personalized guidance grounded in your family profile & forecast'}
             </span>
           </div>
         </div>
 
+        {/* Right side controls: Location & Language Toggle */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setProfile({ ...profile, language: profile.language === 'en' ? 'hi' : 'en' })}
+            className="px-2.5 py-1 rounded-lg border border-surface-container bg-surface-container-low hover:bg-surface-container text-on-surface font-label-sm text-[11px] font-bold transition-colors cursor-pointer"
+            title="Toggle Language"
+          >
+            {profile.language === 'en' ? 'हिन्दी' : 'English'}
+          </button>
+
           <span className="font-label-sm text-[11px] px-2.5 py-1 rounded-full bg-surface-container text-on-surface font-semibold">
             {profile.location.name}
           </span>
@@ -230,7 +270,7 @@ Output JSON format:
             key={q}
             type="button"
             onClick={() => handleSend(q)}
-            className="shrink-0 px-3 py-1.5 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-[12px] font-medium border border-surface-container/60"
+            className="shrink-0 px-3 py-1.5 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-[12px] font-medium border border-surface-container/60 cursor-pointer"
           >
             {q}
           </button>
@@ -257,10 +297,16 @@ Output JSON format:
 
               {/* Recommended Action Pill with Real Receipt */}
               {msg.recommendedAction && (
-                <div className="mt-2.5 pt-2 border-t border-surface-container flex flex-col gap-1.5">
-                  <span className="font-label-sm text-[10px] text-secondary font-bold uppercase tracking-wider">
-                    Recommended Routine Action
-                  </span>
+                <div className="mt-2.5 pt-2.5 border-t border-surface-container flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-sm text-[10px] text-secondary font-bold uppercase tracking-wider">
+                      Recommended Routine Action
+                    </span>
+                    <span className="text-[11px] text-on-surface-variant font-medium">
+                      {msg.recommendedAction.start} – {msg.recommendedAction.end}
+                    </span>
+                  </div>
+
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <span className="font-semibold text-on-surface text-[13px]">
                       {msg.recommendedAction.title}
@@ -277,6 +323,29 @@ Output JSON format:
                         </span>
                       )}
                     </div>
+                  </div>
+
+                  {/* Add to Plan Button */}
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      disabled={msg.recommendedAction.added}
+                      onClick={() => handleAddToPlan(msg.id, msg.recommendedAction!)}
+                      className={`px-3 py-1 rounded-lg font-label-sm text-[11px] font-bold flex items-center gap-1 transition-all ${
+                        msg.recommendedAction.added
+                          ? 'bg-secondary/10 text-secondary cursor-default'
+                          : 'bg-primary text-on-primary hover:bg-primary-container cursor-pointer'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[14px]">
+                        {msg.recommendedAction.added ? 'check' : 'add'}
+                      </span>
+                      <span>
+                        {msg.recommendedAction.added
+                          ? (profile.language === 'hi' ? 'दैनिक योजना में जोड़ा गया ✓' : 'Added to plan ✓')
+                          : (profile.language === 'hi' ? 'मेरी योजना में जोड़ें' : 'Add to my plan')}
+                      </span>
+                    </button>
                   </div>
                 </div>
               )}
@@ -307,16 +376,20 @@ Output JSON format:
           type="text"
           value={inputQuery}
           onChange={(e) => setInputQuery(e.target.value)}
-          placeholder="Ask a question about today's air quality, commute, or family routines…"
+          placeholder={
+            profile.language === 'hi'
+              ? 'आज की वायु गुणवत्ता, आवागमन या परिवार की दिनचर्या के बारे में पूछें…'
+              : "Ask a question about today's air quality, commute, or family routines…"
+          }
           className="flex-1 px-4 py-3 rounded-2xl bg-surface-container-lowest border border-surface-container text-on-surface font-body-md text-body-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
 
         <button
           type="submit"
           disabled={!inputQuery.trim() || isSending}
-          className="px-5 py-3 rounded-2xl bg-primary text-on-primary font-label-md text-label-md font-bold hover:bg-primary-container transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+          className="px-5 py-3 rounded-2xl bg-primary text-on-primary font-label-md text-label-md font-bold hover:bg-primary-container transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1.5 shrink-0 cursor-pointer"
         >
-          <span>Send</span>
+          <span>{profile.language === 'hi' ? 'भेजें' : 'Send'}</span>
           <span className="material-symbols-outlined text-[18px]">send</span>
         </button>
       </form>
@@ -325,7 +398,9 @@ Output JSON format:
       <div className="flex items-center justify-center gap-1.5 text-outline text-[11px] text-center">
         <span className="material-symbols-outlined text-[14px]">verified_user</span>
         <span>
-          SaafDin provides atmospheric exposure screening. For clinical guidance or medical advice, consult a physician.
+          {profile.language === 'hi'
+            ? 'साफदिन वायुमंडलीय जोखिम मूल्यांकन प्रदान करता है। नैदानिक मार्गदर्शन के लिए चिकित्सक से परामर्श लें।'
+            : 'SaafDin provides atmospheric exposure screening. For clinical guidance or medical advice, consult a physician.'}
         </span>
       </div>
     </div>
