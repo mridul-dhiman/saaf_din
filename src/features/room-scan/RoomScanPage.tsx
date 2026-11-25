@@ -92,11 +92,8 @@ export const RoomScanPage: React.FC = () => {
   const handleUseSample = () => {
     setImagePreview(SAMPLE_ROOM_IMAGE);
     setIsSampleResult(true);
-    setStage('analysing');
-    setTimeout(() => {
-      setFindings(DEFAULT_FINDINGS);
-      setStage('results');
-    }, 600);
+    setFindings(DEFAULT_FINDINGS);
+    setStage('results');
   };
 
   const runAudit = async (base64Img: string) => {
