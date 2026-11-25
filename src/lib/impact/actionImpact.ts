@@ -52,9 +52,20 @@ export function computeActionImpact(
   const hourlyPm25 = slices.map((s) => ({ hour: s.hour, pm2_5: getHourlyPm25(s.hour) }));
 
   const isHousehold = action.memberId === null;
-  const targetMembers: Member[] = isHousehold
-    ? profile.members
-    : [profile.members.find((m) => m.id === action.memberId) || profile.members[0]];
+  let targetMembers: Member[] = [];
+  if (isHousehold) {
+    targetMembers = profile.members;
+  } else {
+    const foundMember = profile.members.find((m) => m.id === action.memberId);
+    if (!foundMember) {
+      // A member-specific action without a valid member returns null figures
+      return {
+        exposureAvoidedUg: null,
+        co2SavedKg: null,
+      };
+    }
+    targetMembers = [foundMember];
+  }
 
   switch (action.type) {
     case 'keep_closed': {
@@ -198,8 +209,29 @@ export function computeActionImpact(
 
     case 'ventilate': {
       // Opening windows during clean air window vs worst peak pollution window
-      const worstStart = (action.params?.worstStart as string) || '08:00';
-      const worstEnd = (action.params?.worstEnd as string) || '10:00';
+      const worstStart = action.params?.worstStart as string | undefined;
+      const worstEnd = action.params?.worstEnd as string | undefined;
+
+      if (!worstStart || !worstEnd) {
+        // With no worst window, the ventilate action has no receipt
+        return {
+          exposureAvoidedUg: null,
+          co2SavedKg: null,
+          calculationBreakdown: {
+            durationHours,
+            hoursUsed,
+            hourlyPm25,
+            fEnvBase: ENV_FACTORS['indoors_open'],
+            fEnvAlt: ENV_FACTORS['indoors_open'],
+            fMaskBase: MASK_FACTORS['none'],
+            fMaskAlt: MASK_FACTORS['none'],
+            baselineTotalUg: null,
+            alternativeTotalUg: null,
+            isHousehold,
+          },
+        };
+      }
+
       const worstSlices = getTimeSlices(worstStart, worstEnd);
 
       const fEnvBase = ENV_FACTORS['indoors_open'];
@@ -278,7 +310,7 @@ export function computeActionImpact(
       const fMaskBase = MASK_FACTORS['none'];
       const fMaskAlt = MASK_FACTORS[maskType];
 
-      const targetMember = targetMembers[0] || profile.members[0];
+      const targetMember = targetMembers[0];
       const ageGroup = targetMember.ageGroup;
       const ir = INHALATION_RATES[intensity][ageGroup];
 
@@ -326,7 +358,7 @@ export function computeActionImpact(
       const fMaskBase = MASK_FACTORS['none'];
       const fMaskAlt = MASK_FACTORS['none'];
 
-      const targetMember = targetMembers[0] || profile.members[0];
+      const targetMember = targetMembers[0];
       const ageGroup = targetMember.ageGroup;
       const ir = INHALATION_RATES[intensity][ageGroup];
 
@@ -374,7 +406,7 @@ export function computeActionImpact(
       const fMaskBase = MASK_FACTORS['none'];
       const fMaskAlt = MASK_FACTORS['none'];
 
-      const targetMember = targetMembers[0] || profile.members[0];
+      const targetMember = targetMembers[0];
       const ageGroup = targetMember.ageGroup;
       const ir = INHALATION_RATES[intensity][ageGroup];
 
@@ -427,7 +459,7 @@ export function computeActionImpact(
       const fMaskBase = MASK_FACTORS['none'];
       const fMaskAlt = MASK_FACTORS['none'];
 
-      const targetMember = targetMembers[0] || profile.members[0];
+      const targetMember = targetMembers[0];
       const ageGroup = targetMember.ageGroup;
       const irBase = INHALATION_RATES[baselineIntensity][ageGroup];
 
@@ -481,7 +513,7 @@ export function computeActionImpact(
       const fEnv = ENV_FACTORS[env];
       const fMask = MASK_FACTORS['none'];
 
-      const targetMember = targetMembers[0] || profile.members[0];
+      const targetMember = targetMembers[0];
       const ageGroup = targetMember.ageGroup;
       const ir = INHALATION_RATES[intensity][ageGroup];
 

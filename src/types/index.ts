@@ -35,6 +35,11 @@ export interface Member {
 
 export type CookingFuel = 'lpg' | 'png' | 'induction' | 'biomass';
 
+export interface CookingTimeRange {
+  start: string; // HH:mm
+  end: string;   // HH:mm
+}
+
 export interface Profile {
   location: {
     name: string;
@@ -48,8 +53,13 @@ export interface Profile {
     departs: string;
     returns: string;
   };
+  schoolRun?: {
+    time: string;
+    distanceKm: number;
+  };
   cookingFuel: CookingFuel;
   hasExhaust: boolean;
+  cookingTimes?: CookingTimeRange[];
   hasPurifier: boolean;
   language: 'en' | 'hi';
 }

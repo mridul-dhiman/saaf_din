@@ -799,5 +799,82 @@ describe('Phase 2: Swaps and Simulator Impact Model Tests', () => {
         }
       }
     });
+
+    it('Member-specific action with unknown memberId returns null figures (no profile.members[0] fallback)', () => {
+      const points100 = points24h.map((p) => ({ ...p, pm2_5: 100 }));
+      const lookup = makePm25Lookup(points100);
+
+      const invalidMemberAction: PlannedAction = {
+        id: 'act_unknown_member',
+        type: 'wear_mask',
+        memberId: 'non_existent_member_999',
+        start: '08:00',
+        end: '09:00',
+        title: 'Wear N95 mask',
+        reason: 'Transit protection',
+        params: { mask: 'n95', intensity: 'light' },
+        completed: false,
+      };
+
+      const res = computeActionImpact(invalidMemberAction, MOCK_PROFILE, lookup);
+      expect(res.exposureAvoidedUg).toBeNull();
+      expect(res.co2SavedKg).toBeNull();
+    });
+
+    it('Ventilate action without worst window returns null receipt', () => {
+      const points100 = points24h.map((p) => ({ ...p, pm2_5: 100 }));
+      const lookup = makePm25Lookup(points100);
+
+      const ventWithoutWorst: PlannedAction = {
+        id: 'act_vent_no_worst',
+        type: 'ventilate',
+        memberId: null,
+        start: '13:00',
+        end: '15:00',
+        title: 'Open windows',
+        reason: 'Ventilation',
+        params: {}, // No worstStart or worstEnd
+        completed: false,
+      };
+
+      const res = computeActionImpact(ventWithoutWorst, MOCK_PROFILE, lookup);
+      expect(res.exposureAvoidedUg).toBeNull();
+      expect(res.co2SavedKg).toBeNull();
+    });
+
+    it('Kitchen exhaust emits timed action when cookingTimes is set, or untimed action without receipt when empty', () => {
+      // 1. Profile with cookingTimes
+      const profileWithCooking: Profile = {
+        ...MOCK_PROFILE,
+        hasExhaust: true,
+        cookingTimes: [{ start: '20:00', end: '21:00' }],
+      };
+      const mockWindows: DayWindowsResult = {
+        canVentilateToday: false,
+        bestWindow: null,
+        worstWindow: null,
+        advisory: '',
+      };
+
+      const planWithCooking = generateRuleBasedPlan(profileWithCooking, points24h, mockWindows);
+      const exhaustWithCooking = planWithCooking.find((a) => a.type === 'use_exhaust_while_cooking');
+      expect(exhaustWithCooking).toBeDefined();
+      expect(exhaustWithCooking?.start).toBe('20:00');
+      expect(exhaustWithCooking?.end).toBe('21:00');
+
+      // 2. Profile without cookingTimes
+      const profileWithoutCooking: Profile = {
+        ...MOCK_PROFILE,
+        hasExhaust: true,
+        cookingTimes: undefined,
+      };
+
+      const planWithoutCooking = generateRuleBasedPlan(profileWithoutCooking, points24h, mockWindows);
+      const exhaustWithoutCooking = planWithoutCooking.find((a) => a.type === 'use_exhaust_while_cooking');
+      expect(exhaustWithoutCooking).toBeDefined();
+      expect(exhaustWithoutCooking?.start).toBe('');
+      expect(exhaustWithoutCooking?.end).toBe('');
+      expect(exhaustWithoutCooking?.impact.exposureAvoidedUg).toBeNull();
+    });
   });
 });

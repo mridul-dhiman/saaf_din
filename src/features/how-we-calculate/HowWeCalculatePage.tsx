@@ -10,6 +10,7 @@ import {
   GRID_KG_CO2_PER_KWH,
   SCHOOL_RUN_DISTANCE_KM,
   CIGARETTE_EQUIVALENT_UG_PER_M3_24H,
+  CONSTANT_SOURCES,
 } from '../../lib/impact/constants';
 
 export const HowWeCalculatePage: React.FC = () => {
@@ -33,8 +34,7 @@ export const HowWeCalculatePage: React.FC = () => {
           SaafDin enforces a strict governing architectural rule:{' '}
           <strong className="text-on-surface">Gemini never produces numbers.</strong> Every exposure figure (µg PM2.5),
           carbon emission saving (kg CO₂), cigarette equivalent, and duration in this application is computed
-          deterministically from live Open-Meteo CAMS forecast data, your household profile, and the peer-reviewed
-          constants below.
+          deterministically from live Open-Meteo CAMS forecast data, your household profile, and the constants below.
         </p>
       </div>
 
@@ -112,7 +112,7 @@ export const HowWeCalculatePage: React.FC = () => {
                 <tr>
                   <th className="p-2">Environment Key</th>
                   <th className="p-2">F_env</th>
-                  <th className="p-2">Source / Basis</th>
+                  <th className="p-2">Description</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-container">
@@ -124,12 +124,12 @@ export const HowWeCalculatePage: React.FC = () => {
                       {key === 'outdoors'
                         ? 'Ambient reference baseline'
                         : key === 'indoors_closed_purifier'
-                        ? 'HEPA sealed filtration'
+                        ? 'Domestic air purifier with windows closed'
                         : key === 'indoors_closed'
-                        ? 'Residential infiltration'
+                        ? 'Residential infiltration with windows closed'
                         : key === 'car_closed_recirc'
-                        ? 'Cabin recirc + cabin filter'
-                        : 'Standard literature factor'}
+                        ? 'Vehicle cabin with closed windows and recirculation'
+                        : 'Estimated microenvironment factor'}
                     </td>
                   </tr>
                 ))}
@@ -165,7 +165,7 @@ export const HowWeCalculatePage: React.FC = () => {
                       {key === 'none'
                         ? '0% reduction (unfiltered)'
                         : key === 'cloth'
-                        ? '20% reduction (loose cloth/surgical)'
+                        ? '30% reduction (cloth/surgical mask)'
                         : '70% reduction (fitted particulate respirator)'}
                     </td>
                   </tr>
@@ -183,7 +183,7 @@ export const HowWeCalculatePage: React.FC = () => {
           Inhalation Rates (IR in m³/hour)
         </h3>
         <p className="text-[13px] text-on-surface-variant">
-          Derived from the US EPA Exposure Factors Handbook (2011, Table 6-1: Daily Mean Inhalation Values by Activity Level):
+          Derived from the US EPA Exposure Factors Handbook (chapter 6):
         </p>
 
         <div className="overflow-x-auto rounded-xl border border-surface-container mt-1">
@@ -229,7 +229,7 @@ export const HowWeCalculatePage: React.FC = () => {
             Emission Factors (EF in g CO₂/pkm)
           </h3>
           <p className="text-[12px] text-on-surface-variant">
-            CO₂ emissions per passenger-kilometer (India GHG Program &amp; ARAI transport baseline).
+            CO₂ emissions per passenger-kilometer (passenger transport emission estimates).
           </p>
           <div className="p-2 rounded-lg bg-surface-container-low font-mono text-[12px] text-secondary font-semibold">
             CO₂ Saved (kg) = Distance (km) × (EF_baseline − EF_alt) / 1000
@@ -310,7 +310,7 @@ export const HowWeCalculatePage: React.FC = () => {
         </h3>
         <p className="text-[13px] text-on-surface-variant leading-relaxed">
           To provide an intuitive public-health benchmark for acute particulate exposure, SaafDin translates particulate
-          reduction into cigarette equivalents based on the epidemiological model published by Berkeley Earth (Richard &amp;
+          reduction into cigarette equivalents based on the public health comparison published by Berkeley Earth (Richard &amp;
           Elizabeth Muller, 2015):
         </p>
 
@@ -343,10 +343,9 @@ export const HowWeCalculatePage: React.FC = () => {
         <div className="p-3 rounded-xl bg-surface-container-low border border-surface-container text-[12px] text-on-surface-variant flex items-start gap-2.5">
           <span className="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">verified_user</span>
           <p>
-            Because SaafDin does not connect to unverified indoor telemetry or proprietary hardware,{' '}
-            <strong className="text-on-surface">we do not invent fake indoor PM2.5 numbers</strong>. For indoor combustion
-            swaps and exhaust actions, we present the qualitative health benefit directly in plain language, with figures
-            omitted.
+            Because SaafDin does not have indoor sensors in your home, we do not guess indoor pollution numbers. For indoor
+            cooking smoke and incense, we suggest clean alternatives and kitchen ventilation, explaining the health
+            benefits directly without inventing numbers.
           </p>
         </div>
       </section>
@@ -355,10 +354,10 @@ export const HowWeCalculatePage: React.FC = () => {
       <section className="bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-surface-container flex flex-col gap-space-sm">
         <h3 className="font-headline-sm text-[18px] font-bold text-on-surface flex items-center gap-2">
           <span className="material-symbols-outlined text-secondary text-[22px]">fact_check</span>
-          Complete Constants Verification Checklist
+          Constants Reference &amp; Source Checklist
         </h3>
         <p className="text-[13px] text-on-surface-variant">
-          Full audit inventory of every numerical parameter used in the impact calculation engine:
+          Inventory of every numerical parameter used in the impact calculation engine, generated directly from constants definitions:
         </p>
 
         <div className="overflow-x-auto rounded-xl border border-surface-container mt-1">
@@ -368,88 +367,44 @@ export const HowWeCalculatePage: React.FC = () => {
                 <th className="p-2.5">Constant</th>
                 <th className="p-2.5">Value</th>
                 <th className="p-2.5">Unit</th>
-                <th className="p-2.5">Citation / Source</th>
-                <th className="p-2.5">Audit Status</th>
+                <th className="p-2.5">Source</th>
+                <th className="p-2.5">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container">
-              <tr className="hover:bg-surface-container-low">
-                <td className="p-2.5 font-mono font-semibold">F_env (outdoors)</td>
-                <td className="p-2.5 font-mono">1.0</td>
-                <td className="p-2.5 text-on-surface-variant">ratio</td>
-                <td className="p-2.5 text-on-surface-variant">Ambient reference definition</td>
-                <td className="p-2.5 text-primary font-bold">Verified</td>
-              </tr>
-              <tr className="hover:bg-surface-container-low">
-                <td className="p-2.5 font-mono font-semibold">F_env (indoors_closed)</td>
-                <td className="p-2.5 font-mono">0.5</td>
-                <td className="p-2.5 text-on-surface-variant">ratio</td>
-                <td className="p-2.5 text-on-surface-variant">Residential infiltration studies</td>
-                <td className="p-2.5 text-primary font-bold">Verified</td>
-              </tr>
-              <tr className="hover:bg-surface-container-low">
-                <td className="p-2.5 font-mono font-semibold">F_env (indoors_purifier)</td>
-                <td className="p-2.5 font-mono">0.2</td>
-                <td className="p-2.5 text-on-surface-variant">ratio</td>
-                <td className="p-2.5 text-on-surface-variant">Domestic HEPA room filtration studies</td>
-                <td className="p-2.5 text-primary font-bold">Verified</td>
-              </tr>
-              <tr className="hover:bg-surface-container-low">
-                <td className="p-2.5 font-mono font-semibold">F_mask (N95 / FFP2)</td>
-                <td className="p-2.5 font-mono">0.3</td>
-                <td className="p-2.5 text-on-surface-variant">ratio</td>
-                <td className="p-2.5 text-on-surface-variant">NIOSH real-world fit factor leakage model</td>
-                <td className="p-2.5 text-primary font-bold">Verified</td>
-              </tr>
-              <tr className="hover:bg-surface-container-low">
-                <td className="p-2.5 font-mono font-semibold">Inhalation Rates (IR)</td>
-                <td className="p-2.5 font-mono">0.3 – 2.5</td>
-                <td className="p-2.5 text-on-surface-variant">m³/h</td>
-                <td className="p-2.5 text-on-surface-variant">US EPA Exposure Factors Handbook (2011 Table 6-1)</td>
-                <td className="p-2.5 text-primary font-bold">Verified</td>
-              </tr>
-              <tr className="hover:bg-surface-container-low">
-                <td className="p-2.5 font-mono font-semibold">Emission Factors (EF)</td>
-                <td className="p-2.5 font-mono">0 – 170</td>
-                <td className="p-2.5 text-on-surface-variant">g CO₂/pkm</td>
-                <td className="p-2.5 text-on-surface-variant">India GHG Program &amp; ARAI transport baseline</td>
-                <td className="p-2.5 text-primary font-bold">Verified</td>
-              </tr>
-              <tr className="hover:bg-surface-container-low">
-                <td className="p-2.5 font-mono font-semibold">Cigarette Equivalence</td>
-                <td className="p-2.5 font-mono">{CIGARETTE_EQUIVALENT_UG_PER_M3_24H}</td>
-                <td className="p-2.5 text-on-surface-variant">µg/m³ · 24h</td>
-                <td className="p-2.5 text-on-surface-variant">Berkeley Earth (Muller &amp; Muller 2015)</td>
-                <td className="p-2.5 text-primary font-bold">Verified</td>
-              </tr>
-              <tr className="hover:bg-surface-container-low">
-                <td className="p-2.5 font-mono font-semibold">URBAN_SPEEDS_KMH</td>
-                <td className="p-2.5 font-mono">4 – 35</td>
-                <td className="p-2.5 text-on-surface-variant">km/h</td>
-                <td className="p-2.5 text-on-surface-variant">Internal urban commute approximation</td>
-                <td className="p-2.5 text-outline font-semibold">assumption, not verified</td>
-              </tr>
-              <tr className="hover:bg-surface-container-low">
-                <td className="p-2.5 font-mono font-semibold">PURIFIER_WATTS</td>
-                <td className="p-2.5 font-mono">{PURIFIER_WATTS}</td>
-                <td className="p-2.5 text-on-surface-variant">Watts</td>
-                <td className="p-2.5 text-on-surface-variant">Typical domestic HEPA purifier nominal power</td>
-                <td className="p-2.5 text-outline font-semibold">assumption, not verified</td>
-              </tr>
-              <tr className="hover:bg-surface-container-low">
-                <td className="p-2.5 font-mono font-semibold">GRID_KG_CO2_PER_KWH</td>
-                <td className="p-2.5 font-mono">{GRID_KG_CO2_PER_KWH}</td>
-                <td className="p-2.5 text-on-surface-variant">kg CO₂/kWh</td>
-                <td className="p-2.5 text-on-surface-variant">Central Electricity Authority baseline database</td>
-                <td className="p-2.5 text-outline font-semibold">assumption, not verified</td>
-              </tr>
-              <tr className="hover:bg-surface-container-low">
-                <td className="p-2.5 font-mono font-semibold">SCHOOL_RUN_DISTANCE_KM</td>
-                <td className="p-2.5 font-mono">{SCHOOL_RUN_DISTANCE_KM}</td>
-                <td className="p-2.5 text-on-surface-variant">km</td>
-                <td className="p-2.5 text-on-surface-variant">Default school run estimate</td>
-                <td className="p-2.5 text-outline font-semibold">assumption, no source</td>
-              </tr>
+              {CONSTANT_SOURCES.map((item) => (
+                <tr key={item.constant} className="hover:bg-surface-container-low">
+                  <td className="p-2.5 font-mono font-semibold">{item.constant}</td>
+                  <td className="p-2.5 font-mono">{item.value}</td>
+                  <td className="p-2.5 text-on-surface-variant">{item.unit}</td>
+                  <td className="p-2.5 text-on-surface-variant">
+                    {item.sourceUrl ? (
+                      <a
+                        href={item.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-secondary hover:underline inline-flex items-center gap-1 font-semibold"
+                      >
+                        {item.source}
+                        <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                      </a>
+                    ) : (
+                      item.source
+                    )}
+                  </td>
+                  <td className="p-2.5 font-semibold">
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded-full text-[11px] ${
+                        item.status === 'confirmed in source'
+                          ? 'bg-secondary-container/40 text-secondary'
+                          : 'bg-surface-container-highest text-on-surface-variant font-normal'
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

@@ -78,7 +78,7 @@ export const MASK_FACTORS: Record<MaskFactorKey, number> = {
 
 /**
  * Transport emission factors EF (grams CO2 per passenger-km)
- * Source: India GHG Program transport factors, CPCB, operator sustainability reports
+ * Source: assumption, not verified
  */
 export const EMISSION_FACTORS: Record<TravelMode, number> = {
   walk: 0,
@@ -97,9 +97,101 @@ export const EMISSION_FACTORS: Record<TravelMode, number> = {
 /**
  * Berkeley Earth cigarette equivalence:
  * Breathing air at 22 µg/m³ PM2.5 for 24 hours ≈ smoking 1 cigarette
+ * Source: Berkeley Earth (Muller & Muller 2015), confirmed in source
+ * https://berkeleyearth.org/air-pollution-and-cigarette-equivalence/
  */
 export const CIGARETTE_EQUIVALENT_UG_PER_M3_24H = 22;
 export const CIGARETTE_HOURS_DENOMINATOR = 22 * 24; // 528 µg·h/m³
+
+export interface ConstantSourceInfo {
+  constant: string;
+  value: string;
+  unit: string;
+  source: string;
+  sourceUrl?: string;
+  status: 'confirmed in source' | 'assumption, not verified';
+}
+
+export const CONSTANT_SOURCES: ConstantSourceInfo[] = [
+  {
+    constant: 'F_env (outdoors)',
+    value: '1.0',
+    unit: 'ratio',
+    source: 'Ambient reference definition',
+    status: 'assumption, not verified',
+  },
+  {
+    constant: 'F_env (indoors_closed)',
+    value: '0.5',
+    unit: 'ratio',
+    source: 'Residential infiltration literature default',
+    status: 'assumption, not verified',
+  },
+  {
+    constant: 'F_env (indoors_closed_purifier)',
+    value: '0.2',
+    unit: 'ratio',
+    source: 'Domestic air purifier with closed windows literature default',
+    status: 'assumption, not verified',
+  },
+  {
+    constant: 'F_mask (N95 / FFP2)',
+    value: '0.3',
+    unit: 'ratio',
+    source: 'Particulate respirator fit and leakage literature default',
+    status: 'assumption, not verified',
+  },
+  {
+    constant: 'Inhalation Rates (IR)',
+    value: '0.3 – 3.0',
+    unit: 'm³/h',
+    source: 'US EPA Exposure Factors Handbook, chapter 6',
+    status: 'assumption, not verified',
+  },
+  {
+    constant: 'Emission Factors (EF)',
+    value: '0 – 170',
+    unit: 'g CO₂/pkm',
+    source: 'Passenger transport emission estimates',
+    status: 'assumption, not verified',
+  },
+  {
+    constant: 'Cigarette Equivalence',
+    value: '22',
+    unit: 'µg/m³ · 24h',
+    source: 'Berkeley Earth (Muller & Muller 2015)',
+    sourceUrl: 'https://berkeleyearth.org/air-pollution-and-cigarette-equivalence/',
+    status: 'confirmed in source',
+  },
+  {
+    constant: 'URBAN_SPEEDS_KMH',
+    value: '4.5 – 32',
+    unit: 'km/h',
+    source: 'Urban travel speed estimates',
+    status: 'assumption, not verified',
+  },
+  {
+    constant: 'PURIFIER_WATTS',
+    value: '45',
+    unit: 'Watts',
+    source: 'Domestic HEPA purifier nominal power',
+    status: 'assumption, not verified',
+  },
+  {
+    constant: 'GRID_KG_CO2_PER_KWH',
+    value: '0.7',
+    unit: 'kg CO₂/kWh',
+    source: 'Central Electricity Authority baseline database approximation',
+    status: 'assumption, not verified',
+  },
+  {
+    constant: 'SCHOOL_RUN_DISTANCE_KM',
+    value: '6',
+    unit: 'km',
+    source: 'Typical school transit distance estimate',
+    status: 'assumption, not verified',
+  },
+];
 
 /**
  * Average urban travel speeds (km/h) for Indian cities

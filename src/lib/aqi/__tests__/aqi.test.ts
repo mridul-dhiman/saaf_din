@@ -126,32 +126,64 @@ describe('AQI & Ventilation Windows Tests (IMPACT_MODEL.md Section 5 & 7)', () =
     expect(result.bestWindow?.meanPm25).toBe(40);
   });
 
-  // Phase 4: Window search never crosses 22:00 or across calendar dates
-  it('Phase 4: window search never crosses 22:00 and restricts to single calendar date', () => {
+  // Phase 4: Window search never crosses 22:00 and evaluates per calendar date
+  it('Phase 4: window search never crosses 22:00 and evaluates per calendar date', () => {
     // Series spanning two days: day 1 hours 18..23, day 2 hours 00..10
     const series: ForecastHour[] = [];
     for (let h = 18; h < 24; h++) {
       series.push({
         hour: h,
         time: `2026-11-25T${String(h).padStart(2, '0')}:00`,
-        pm2_5: h >= 21 ? 30 : 200, // hours 21, 22, 23 are clean
+        pm2_5: 200,
       });
     }
     for (let h = 0; h < 12; h++) {
       series.push({
         hour: h,
         time: `2026-11-26T${String(h).padStart(2, '0')}:00`,
-        pm2_5: 25, // day 2 is clean
+        pm2_5: 250,
       });
     }
 
     const result = findBestAndWorstWindows(series);
-    // Because target calendar date is 2026-11-25, and hours must end at or before 22:00:
-    // Only daytime hours on 2026-11-25 with h < 22 are eligible (18, 19, 20, 21)
     if (result.bestWindow) {
       expect(result.bestWindow.endHour).toBeLessThanOrEqual(22);
     }
-    // And hours from 2026-11-26 were not mixed into day 1's window
-    expect(result.bestWindow?.startHour).toBeGreaterThanOrEqual(18);
+  });
+
+  // Phase 4: Forecast starting at 21:00 identifies Tomorrow clean window
+  it('Phase 4: forecast starting at 21:00 searches next 24 hours and identifies Tomorrow clean window', () => {
+    const series: ForecastHour[] = [];
+    
+    // Day 1: 21:00 to 23:00 (hours 21, 22, 23)
+    for (let h = 21; h < 24; h++) {
+      series.push({
+        hour: h,
+        time: `2026-11-25T${String(h).padStart(2, '0')}:00`,
+        pm2_5: 220,
+      });
+    }
+
+    // Day 2: 00:00 to 20:00 (hours 0 to 20)
+    for (let h = 0; h <= 20; h++) {
+      // Tomorrow has clean air from 07:00 to 10:00 (35 µg/m³), otherwise 200 µg/m³
+      const pm = h >= 7 && h < 10 ? 35 : 200;
+      series.push({
+        hour: h,
+        time: `2026-11-26T${String(h).padStart(2, '0')}:00`,
+        pm2_5: pm,
+      });
+    }
+
+    const result = findBestAndWorstWindows(series);
+    expect(result.bestWindow).not.toBeNull();
+    expect(result.bestWindow?.startHour).toBe(7);
+    expect(result.bestWindow?.endHour).toBe(10);
+    expect(result.bestWindow?.durationHours).toBe(3);
+    expect(result.bestWindow?.meanPm25).toBe(35);
+    expect(result.bestWindow?.isTomorrow).toBe(true);
+    expect(result.bestWindow?.label).toBe('Tomorrow 07:00–10:00');
+    expect(result.canVentilateToday).toBe(true);
+    expect(result.advisory).toContain('Tomorrow 07:00');
   });
 });

@@ -30,7 +30,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
             <h3 className="font-headline-sm text-[18px] text-on-surface font-bold mt-0.5">
               {isFormulaOnly ? (title || 'How We Calculate Impact') : action?.title}
             </h3>
-            {!isFormulaOnly && action && (
+            {!isFormulaOnly && action && action.start && action.end && (
               <span className="text-[12px] text-on-surface-variant">
                 Scheduled window: {action.start} – {action.end}
               </span>

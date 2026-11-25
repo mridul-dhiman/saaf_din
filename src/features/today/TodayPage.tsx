@@ -308,9 +308,11 @@ export const TodayPage: React.FC = () => {
                         {/* Top Meta Line: Time + Beneficiary Tag + Receipt Pills */}
                         <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-label-sm text-label-sm text-outline font-semibold">
-                              {act.start} – {act.end}
-                            </span>
+                            {act.start && act.end && (
+                              <span className="font-label-sm text-label-sm text-outline font-semibold">
+                                {act.start} – {act.end}
+                              </span>
+                            )}
                             {beneficiary && (
                               <span className="font-label-sm text-[10px] px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface font-semibold capitalize">
                                 {beneficiary.name} ({beneficiary.ageGroup})

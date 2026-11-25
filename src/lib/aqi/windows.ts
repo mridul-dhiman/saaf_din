@@ -1,7 +1,7 @@
 export interface ForecastHour {
   hour: number;          // 0-23
   pm2_5: number | null;  // µg/m³
-  time?: string;         // ISO or formatted
+  time?: string;         // ISO or formatted, e.g. "2026-11-25T08:00"
   us_aqi?: number | null;
 }
 
@@ -13,6 +13,9 @@ export interface AqiWindow {
   durationHours: number;
   meanPm25: number;
   isVentilationRecommended: boolean;
+  isTomorrow?: boolean;
+  dateLabel?: string;
+  label?: string; // e.g. "Tomorrow 07:00–10:00" or "13:00–15:00"
 }
 
 export interface DayWindowsResult {
@@ -25,10 +28,20 @@ export interface DayWindowsResult {
 const VENTILATION_THRESHOLD_UG = 150; // Above 150 µg/m³, no good ventilation window exists
 const MIN_WINDOW_HOURS = 2;
 
+interface WindowCandidate {
+  startHour: number;
+  endHour: number;
+  mean: number;
+  duration: number;
+  date: string | null;
+  isTomorrow: boolean;
+}
+
 /**
  * Finds the best (lowest PM2.5) and worst (highest PM2.5) contiguous ventilation windows
- * of at least 2 hours between 06:00 and 22:00 local time within one calendar date.
- * No 3-hour cap: allows any contiguous daytime run of length >= 2 hours.
+ * of at least 2 hours between 06:00 and 22:00 local time within the next 24 hours of forecast.
+ * Evaluates 06:00–22:00 on each calendar date the 24 hours cover, takes the best and worst
+ * across them, and labels the date when it is tomorrow ("Tomorrow 07:00–10:00").
  */
 export function findBestAndWorstWindows(
   hours: ForecastHour[],
@@ -44,81 +57,97 @@ export function findBestAndWorstWindows(
     };
   }
 
-  // Determine target calendar date from the first forecast point
-  const firstPoint = hours[0];
-  const targetDate = firstPoint.time ? firstPoint.time.slice(0, 10) : null;
+  // Evaluate the next 24 hours of forecast
+  const next24 = hours.slice(0, 24);
+  const firstPoint = next24[0];
+  const startDate = firstPoint.time ? firstPoint.time.slice(0, 10) : null;
 
-  // Filter to eligible waking hours on the same calendar date
-  // A window ending at or before maxHour (22:00) means the start hour of the last block must be <= maxHour - 1 (21:00)
-  const daytimeHours = hours.filter((h) => {
-    if (targetDate && h.time && h.time.slice(0, 10) !== targetDate) {
-      return false;
+  // Group forecast hours by calendar date (or 'single_date' if timestamps not provided)
+  const dateBuckets = new Map<string, ForecastHour[]>();
+  for (const h of next24) {
+    const d = h.time ? h.time.slice(0, 10) : 'single_date';
+    if (!dateBuckets.has(d)) {
+      dateBuckets.set(d, []);
     }
-    return h.hour >= minHour && h.hour < maxHour;
-  });
+    dateBuckets.get(d)!.push(h);
+  }
 
-  if (daytimeHours.length < MIN_WINDOW_HOURS) {
+  let bestMean = Infinity;
+  let bestCandidate: WindowCandidate | null = null;
+
+  let worstMean = -Infinity;
+  let worstCandidate: WindowCandidate | null = null;
+
+  // Search contiguous runs of length >= MIN_WINDOW_HOURS on each calendar date
+  for (const [dateStr, dateHours] of dateBuckets.entries()) {
+    const isTomorrow = startDate !== null && dateStr !== 'single_date' && dateStr !== startDate;
+
+    // Filter to daytime waking hours on this calendar date
+    const daytimeHours = dateHours.filter((h) => h.hour >= minHour && h.hour < maxHour);
+    if (daytimeHours.length < MIN_WINDOW_HOURS) {
+      continue;
+    }
+
+    for (let len = MIN_WINDOW_HOURS; len <= daytimeHours.length; len++) {
+      for (let i = 0; i <= daytimeHours.length - len; i++) {
+        const slice = daytimeHours.slice(i, i + len);
+
+        // Verify hours are contiguous and no hour has null/NaN PM2.5
+        let isContiguous = true;
+        let hasNullPm = false;
+        for (let j = 0; j < slice.length; j++) {
+          if (slice[j].pm2_5 === null || slice[j].pm2_5 === undefined || isNaN(slice[j].pm2_5 as number)) {
+            hasNullPm = true;
+            break;
+          }
+          if (j > 0 && slice[j].hour !== slice[j - 1].hour + 1) {
+            isContiguous = false;
+            break;
+          }
+        }
+        if (!isContiguous || hasNullPm) continue;
+
+        const endHour = slice[slice.length - 1].hour + 1;
+        // Guarantee window ends at or before maxHour (22:00)
+        if (endHour > maxHour) continue;
+
+        const sumPm = slice.reduce((acc, h) => acc + (h.pm2_5 as number), 0);
+        const mean = sumPm / len;
+
+        if (mean < bestMean || (mean === bestMean && bestCandidate && len > bestCandidate.duration)) {
+          bestMean = mean;
+          bestCandidate = {
+            startHour: slice[0].hour,
+            endHour,
+            mean: Math.round(mean),
+            duration: len,
+            date: dateStr,
+            isTomorrow,
+          };
+        }
+
+        if (mean > worstMean || (mean === worstMean && worstCandidate && len > worstCandidate.duration)) {
+          worstMean = mean;
+          worstCandidate = {
+            startHour: slice[0].hour,
+            endHour,
+            mean: Math.round(mean),
+            duration: len,
+            date: dateStr,
+            isTomorrow,
+          };
+        }
+      }
+    }
+  }
+
+  if (!bestCandidate && !worstCandidate) {
     return {
       bestWindow: null,
       worstWindow: null,
       canVentilateToday: false,
-      advisory: 'Insufficient daytime forecast data available to determine windows.',
+      advisory: '',
     };
-  }
-
-  let bestMean = Infinity;
-  let bestCandidate: { startHour: number; endHour: number; mean: number; duration: number } | null = null;
-
-  let worstMean = -Infinity;
-  let worstCandidate: { startHour: number; endHour: number; mean: number; duration: number } | null = null;
-
-  // Search contiguous runs of length >= MIN_WINDOW_HOURS with no upper cap
-  for (let len = MIN_WINDOW_HOURS; len <= daytimeHours.length; len++) {
-    for (let i = 0; i <= daytimeHours.length - len; i++) {
-      const slice = daytimeHours.slice(i, i + len);
-
-      // Verify hours are contiguous and no hour has null/NaN PM2.5
-      let isContiguous = true;
-      let hasNullPm = false;
-      for (let j = 0; j < slice.length; j++) {
-        if (slice[j].pm2_5 === null || slice[j].pm2_5 === undefined || isNaN(slice[j].pm2_5 as number)) {
-          hasNullPm = true;
-          break;
-        }
-        if (j > 0 && slice[j].hour !== slice[j - 1].hour + 1) {
-          isContiguous = false;
-          break;
-        }
-      }
-      if (!isContiguous || hasNullPm) continue;
-
-      const endHour = slice[slice.length - 1].hour + 1;
-      // Guarantee window ends at or before maxHour
-      if (endHour > maxHour) continue;
-
-      const sumPm = slice.reduce((acc, h) => acc + (h.pm2_5 as number), 0);
-      const mean = sumPm / len;
-
-      if (mean < bestMean || (mean === bestMean && bestCandidate && len > bestCandidate.duration)) {
-        bestMean = mean;
-        bestCandidate = {
-          startHour: slice[0].hour,
-          endHour,
-          mean: Math.round(mean),
-          duration: len,
-        };
-      }
-
-      if (mean > worstMean || (mean === worstMean && worstCandidate && len > worstCandidate.duration)) {
-        worstMean = mean;
-        worstCandidate = {
-          startHour: slice[0].hour,
-          endHour,
-          mean: Math.round(mean),
-          duration: len,
-        };
-      }
-    }
   }
 
   const formatTime = (h: number) => `${String(h).padStart(2, '0')}:00`;
@@ -132,6 +161,11 @@ export function findBestAndWorstWindows(
         durationHours: bestCandidate.duration,
         meanPm25: bestCandidate.mean,
         isVentilationRecommended: bestCandidate.mean <= VENTILATION_THRESHOLD_UG,
+        isTomorrow: bestCandidate.isTomorrow,
+        dateLabel: bestCandidate.isTomorrow ? 'Tomorrow' : undefined,
+        label: bestCandidate.isTomorrow
+          ? `Tomorrow ${formatTime(bestCandidate.startHour)}–${formatTime(bestCandidate.endHour)}`
+          : `${formatTime(bestCandidate.startHour)}–${formatTime(bestCandidate.endHour)}`,
       }
     : null;
 
@@ -144,6 +178,11 @@ export function findBestAndWorstWindows(
         durationHours: worstCandidate.duration,
         meanPm25: worstCandidate.mean,
         isVentilationRecommended: false,
+        isTomorrow: worstCandidate.isTomorrow,
+        dateLabel: worstCandidate.isTomorrow ? 'Tomorrow' : undefined,
+        label: worstCandidate.isTomorrow
+          ? `Tomorrow ${formatTime(worstCandidate.startHour)}–${formatTime(worstCandidate.endHour)}`
+          : `${formatTime(worstCandidate.startHour)}–${formatTime(worstCandidate.endHour)}`,
       }
     : null;
 
@@ -153,7 +192,8 @@ export function findBestAndWorstWindows(
   if (bestWindow && !canVentilate) {
     advisory = `Air quality remains severe throughout the day (lowest average is ${bestWindow.meanPm25} µg/m³). Keep windows closed and rely on indoor air cleaning.`;
   } else if (bestWindow && canVentilate) {
-    advisory = `Best ventilation window is between ${bestWindow.startTime} and ${bestWindow.endTime} (avg PM2.5: ${bestWindow.meanPm25} µg/m³).`;
+    const timePrefix = bestWindow.isTomorrow ? 'Tomorrow ' : '';
+    advisory = `Best ventilation window is between ${timePrefix}${bestWindow.startTime} and ${bestWindow.endTime} (avg PM2.5: ${bestWindow.meanPm25} µg/m³).`;
   }
 
   return {

@@ -119,7 +119,7 @@ export const HourlyStrip: React.FC<HourlyStripProps> = ({ points, windows }) => 
                 }`}
               >
                 {windows.canVentilateToday
-                  ? `Best Window: ${windows.bestWindow.startTime} – ${windows.bestWindow.endTime}`
+                  ? `Best Window: ${windows.bestWindow.label || `${windows.bestWindow.startTime} – ${windows.bestWindow.endTime}`}`
                   : 'No Safe Ventilation Window Today'}
               </span>
               <span className="font-body-sm text-body-sm text-on-surface">

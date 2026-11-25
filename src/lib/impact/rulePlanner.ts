@@ -69,10 +69,12 @@ export function generateRuleBasedPlan(
       end: windows.bestWindow.endTime,
       title: 'Open windows during clean air window',
       reason: 'Flushes stale indoor air safely while outdoor PM2.5 is at its lowest daily level.',
-      params: {
-        worstStart: windows.worstWindow?.startTime || '08:00',
-        worstEnd: windows.worstWindow?.endTime || '10:00',
-      },
+      params: windows.worstWindow
+        ? {
+            worstStart: windows.worstWindow.startTime,
+            worstEnd: windows.worstWindow.endTime,
+          }
+        : {},
       completed: false,
     });
   }
@@ -187,17 +189,35 @@ export function generateRuleBasedPlan(
 
   // 5. Kitchen Exhaust Fan (Cooking)
   if (profile.hasExhaust) {
-    candidateActions.push({
-      id: 'act_kitchen_exhaust',
-      type: 'use_exhaust_while_cooking',
-      memberId: null,
-      start: '19:30',
-      end: '20:30',
-      title: 'Turn on kitchen exhaust fan while cooking',
-      reason: 'Removes cooking smoke and unburned combustion gases directly at the stove.',
-      params: {},
-      completed: false,
-    });
+    if (profile.cookingTimes && profile.cookingTimes.length > 0) {
+      for (let i = 0; i < profile.cookingTimes.length; i++) {
+        const ct = profile.cookingTimes[i];
+        candidateActions.push({
+          id: `act_kitchen_exhaust_${i}`,
+          type: 'use_exhaust_while_cooking',
+          memberId: null,
+          start: ct.start,
+          end: ct.end,
+          title: 'Turn on kitchen exhaust fan while cooking',
+          reason: 'Removes cooking smoke and combustion particles directly at the stove.',
+          params: {},
+          completed: false,
+        });
+      }
+    } else {
+      // Until cookingTimes is set in onboarding, emit action without fixed time or time-bound receipt
+      candidateActions.push({
+        id: 'act_kitchen_exhaust',
+        type: 'use_exhaust_while_cooking',
+        memberId: null,
+        start: '',
+        end: '',
+        title: 'Turn on kitchen exhaust fan while cooking',
+        reason: 'Removes cooking smoke and combustion particles directly at the stove.',
+        params: {},
+        completed: false,
+      });
+    }
   }
 
   // De-duplication: Never emit overlapping actions for the same member
