@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "saaf-din",
     "public": "dist",
     "ignore": [
       "firebase.json",
