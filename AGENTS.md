@@ -5,6 +5,7 @@ Hackathon entry for PromptWars Virtual, Main Challenge 06. A web-first GenAI ass
 The brief, verbatim: "Create a GenAI-powered assistant that suggests low-emission daily routines, indoor air quality hacks, and sustainable alternatives tailored to a user's location and lifestyle, while clearly explaining the direct impact of their choices."
 
 Read these before building:
+- `docs/PROGRESS.md`: **start here.** Current state, live-site blockers, setup on a new machine, next steps.
 - `docs/HANDOFF.md`: scope, screen-by-screen spec, data model, AI contracts, build order.
 - `docs/IMPACT_MODEL.md`: the formulas and constants behind every number shown in the UI.
 - `design/v2/stitch_saafdin_air_quality_assistant/`: the revised Stitch export and the primary design reference. One folder per screen with `code.html` and `screen.png`.
