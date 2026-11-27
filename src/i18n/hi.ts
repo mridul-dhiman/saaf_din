@@ -61,6 +61,9 @@ export const hi: TranslationDictionary = {
     hourlyStripHint: 'घंटेवार विवरण देखने के लिए किसी भी बार पर टैप करें',
     forecastUnavailable: 'पूर्वानुमान अनुपलब्ध',
     retryConnection: 'पुनः प्रयास करें',
+    plannedByGemini: 'Gemini द्वारा योजना',
+    askingGemini: 'Gemini से पूछ रहे हैं…',
+    ruleBasedPlan: 'नियम-आधारित योजना · Gemini उपलब्ध नहीं',
   },
   swaps: {
     title: 'स्वच्छ आदत विकल्प',

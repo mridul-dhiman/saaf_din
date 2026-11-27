@@ -76,6 +76,14 @@ const planResponseSchema = Schema.array({
   items: planActionSchema,
 });
 
+/** Where a daily plan came from: Gemini (live or cached today) or the rule-based fallback. */
+export type PlanSource = 'gemini' | 'rules';
+
+export interface GeneratedPlan {
+  source: PlanSource;
+  actions: EnrichedAction[];
+}
+
 /**
  * Calls Gemini through Firebase AI Logic (GoogleAIBackend) to generate
  * a personalized daily routine. Strictly enforces response schema and fallback.
@@ -85,9 +93,10 @@ export async function generatePlan(
   forecastPoints: HourlyForecastPoint[],
   windows: DayWindowsResult,
   adoptedSwaps: any[] = []
-): Promise<EnrichedAction[]> {
+): Promise<GeneratedPlan> {
   const dateStr = new Date().toISOString().slice(0, 10);
-  const profileHash = hashString(JSON.stringify(profile));
+  // Adopted swaps are part of the prompt, so they must be part of the cache key
+  const profileHash = hashString(JSON.stringify({ profile, adoptedSwaps }));
   const cacheKey = `saafdin_plan_${dateStr}_${profileHash}`;
 
   // Check today's cache first to protect quota
@@ -96,10 +105,13 @@ export async function generatePlan(
     if (cached) {
       const parsed = JSON.parse(cached) as PlannedAction[];
       const getHourlyPm25 = makePm25Lookup(forecastPoints);
-      return parsed.map((act) => ({
-        ...act,
-        impact: computeActionImpact(act, profile, getHourlyPm25),
-      }));
+      return {
+        source: 'gemini',
+        actions: parsed.map((act) => ({
+          ...act,
+          impact: computeActionImpact(act, profile, getHourlyPm25),
+        })),
+      };
     }
   } catch (e) {
     console.warn('Cache check failed:', e);
@@ -181,10 +193,13 @@ HARD RULES:
         }
 
         const getHourlyPm25 = makePm25Lookup(forecastPoints);
-        return validation.actions.map((act) => ({
-          ...act,
-          impact: computeActionImpact(act, profile, getHourlyPm25),
-        }));
+        return {
+          source: 'gemini',
+          actions: validation.actions.map((act) => ({
+            ...act,
+            impact: computeActionImpact(act, profile, getHourlyPm25),
+          })),
+        };
       }
 
       lastErrorHint = validation.error || 'Schema validation failed';
@@ -197,7 +212,7 @@ HARD RULES:
 
   // Graceful fallback to rule-based plan
   console.info('Falling back to rule-based daily plan.');
-  return generateRuleBasedPlan(profile, forecastPoints, windows);
+  return { source: 'rules', actions: generateRuleBasedPlan(profile, forecastPoints, windows) };
 }
 
 export const generateGeminiPlan = generatePlan;

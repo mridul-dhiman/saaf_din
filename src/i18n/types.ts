@@ -59,6 +59,9 @@ export interface TranslationDictionary {
     hourlyStripHint: string;
     forecastUnavailable: string;
     retryConnection: string;
+    plannedByGemini: string;
+    askingGemini: string;
+    ruleBasedPlan: string;
   };
   swaps: {
     title: string;

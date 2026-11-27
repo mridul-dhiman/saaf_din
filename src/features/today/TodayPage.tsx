@@ -8,7 +8,8 @@ import { findBestAndWorstWindows } from '../../lib/aqi';
 import { AqiBanner } from '../../components/AqiBanner';
 import { HourlyStrip } from '../../components/HourlyStrip';
 import { generateRuleBasedPlan, EnrichedAction } from '../../lib/impact/rulePlanner';
-import { generateGeminiPlan } from '../../services/gemini';
+import { generateGeminiPlan, PlanSource } from '../../services/gemini';
+import { HABIT_SWAPS } from '../swaps/swapsData';
 import { ReceiptModal } from '../../components/ReceiptModal';
 import { ShareCardModal } from '../../components/ShareCardModal';
 import { StatPill } from '../../components/StatPill';
@@ -23,6 +24,7 @@ export const TodayPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [actions, setActions] = useState<EnrichedAction[]>([]);
+  const [planSource, setPlanSource] = useState<PlanSource | 'pending'>('pending');
   const [selectedActionForReceipt, setSelectedActionForReceipt] = useState<EnrichedAction | null>(null);
   const [showFormulaModal, setShowFormulaModal] = useState<boolean>(false);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
@@ -67,6 +69,7 @@ export const TodayPage: React.FC = () => {
     if (!forecast || forecast.points.length === 0) return;
 
     let active = true;
+    setPlanSource('pending');
 
     // First render immediate rule-based plan so UI is never blank
     const initialPlan = generateRuleBasedPlan(profile, forecast.points, windowsResult);
@@ -114,10 +117,15 @@ export const TodayPage: React.FC = () => {
         // ignore
       }
 
+      // Gemini needs the swap details, not just their ids
+      const adoptedSwaps = HABIT_SWAPS.filter((s) => adoptedSwapIds.includes(s.id));
+
       // Then attempt Gemini plan asynchronously
-      generateGeminiPlan(profile, forecast.points, windowsResult, adoptedSwapIds)
-        .then((geminiPlan) => {
-          if (active && geminiPlan.length > 0) {
+      generateGeminiPlan(profile, forecast.points, windowsResult, adoptedSwaps)
+        .then(({ actions: geminiPlan, source }) => {
+          if (!active) return;
+          setPlanSource(geminiPlan.length > 0 ? source : 'rules');
+          if (geminiPlan.length > 0) {
             const enrichedWithCompletions = applyCompletions(geminiPlan, savedCompletion);
             setActions(enrichedWithCompletions);
             savePlanToFirestore(todayDateStr, {
@@ -127,6 +135,7 @@ export const TodayPage: React.FC = () => {
           }
         })
         .catch((err) => {
+          if (active) setPlanSource('rules');
           console.warn('Gemini plan generation error, maintaining rule-based plan:', err);
         });
     });
@@ -266,11 +275,28 @@ export const TodayPage: React.FC = () => {
             {/* Left 8 Cols: Interactive Daily Action Plan */}
             <div className="lg:col-span-8 flex flex-col gap-space-md">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="material-symbols-outlined text-primary text-[24px]">checklist</span>
                   <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
                     {t.today.title}
                   </h2>
+                  <span
+                    className={
+                      planSource === 'gemini'
+                        ? 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-label-sm text-[11px] font-bold'
+                        : 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-[11px] font-bold'
+                    }
+                    aria-live="polite"
+                  >
+                    <span className={`material-symbols-outlined text-[14px] ${planSource === 'pending' ? 'animate-spin' : ''}`}>
+                      {planSource === 'gemini' ? 'auto_awesome' : planSource === 'pending' ? 'progress_activity' : 'rule'}
+                    </span>
+                    {planSource === 'gemini'
+                      ? t.today.plannedByGemini
+                      : planSource === 'pending'
+                        ? t.today.askingGemini
+                        : t.today.ruleBasedPlan}
+                  </span>
                 </div>
                 <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">
                   {completedCount} of {totalActionsCount} {t.today.actionsDone}

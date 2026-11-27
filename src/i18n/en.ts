@@ -61,6 +61,9 @@ export const en: TranslationDictionary = {
     hourlyStripHint: 'Hover or tap any bar for hourly details',
     forecastUnavailable: 'Forecast unavailable',
     retryConnection: 'Retry Connection',
+    plannedByGemini: 'Planned by Gemini',
+    askingGemini: 'Asking Gemini…',
+    ruleBasedPlan: 'Rule-based plan · Gemini unavailable',
   },
   swaps: {
     title: 'Clean Habit Alternatives',
